@@ -1,26 +1,18 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../../../AuthPage.css'; // Vamos separar o CSS para melhor organização
+import '../../../AuthPage.css'; // Certifique-se que o caminho está correto
 
 const AuthPage = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="auth-wrapper">
-      <div className="auth-content">
-        <h1 className="welcome-title">Welcome</h1>
-        
-        <div className="button-container">
-          <button onClick={() => navigate('/login')} className="btn-main">
-            Login
-          </button>
-          <button onClick={() => navigate('/register')} className="btn-main">
-            Register
-          </button>
-        </div>
-
-        <h2 className="brand-footer">Petify</h2>
+      <h1 className="welcome-text">Welcome</h1>
+      
+      <div className="button-group">
+        <button className="btn-auth">Login</button>
+        <button className="btn-auth">Register</button>
+        <a href="#" className="business-link">Do you have a business?</a>
       </div>
+
+      <h2 className="petify-logo">Petify</h2>
     </div>
   );
 };
