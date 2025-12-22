@@ -1,20 +1,28 @@
-
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../../AuthPage.css'; // Vamos separar o CSS para melhor organização
 
+const AuthPage = () => {
+  const navigate = useNavigate();
 
-
-function AuthPage() {
-    const navigate = useNavigate();
   return (
-    <div className="container mt-5">
-      <h1>Authentication Page</h1>
-      <button onClick={()=>navigate('/register')} >Register</button>
-      <br/>
-      <br/>
-      <button onClick={()=>navigate('/login')} >Login</button>
+    <div className="auth-wrapper">
+      <div className="auth-content">
+        <h1 className="welcome-title">Welcome</h1>
+        
+        <div className="button-container">
+          <button onClick={() => navigate('/login')} className="btn-main">
+            Login
+          </button>
+          <button onClick={() => navigate('/register')} className="btn-main">
+            Register
+          </button>
+        </div>
 
-      {/* Add your authentication components here */}
+        <h2 className="brand-footer">Petify</h2>
+      </div>
     </div>
-  )
-}
-export default AuthPage
+  );
+};
+
+export default AuthPage;

@@ -1,0 +1,76 @@
+/* Contentor Principal com o Gradiente */
+.auth-wrapper {
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, #d1a67a 0%, #3e3e3e 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Área interna que segura os elementos */
+.auth-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem 2rem; /* Espaçamento interno */
+  max-width: 1200px; /* Limita a largura em ecrãs gigantes */
+}
+
+/* Títulos */
+.welcome-title {
+  color: white;
+  font-size: clamp(2.5rem, 8vw, 4.5rem); /* Tamanho de fonte fluido */
+  font-weight: 600;
+  margin: 0;
+}
+
+.brand-footer {
+  color: white;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Contentor dos Botões */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  width: 100%;
+}
+
+/* Botões Estilizados */
+.btn-main {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 0;
+  width: 100%; /* No telemóvel ocupa quase tudo */
+  max-width: 300px; /* No PC não fica gigante */
+  border-radius: 15px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-main:hover {
+  background-color: #222;
+  transform: scale(1.05);
+}
+
+/* Ajustes para Computadores (Ecrãs Maiores) */
+@media (min-width: 768px) {
+  .auth-content {
+    padding: 5rem 6rem; /* Mais espaço nas bordas em monitores */
+  }
+  
+  .button-container {
+    gap: 2rem;
+  }
+}
