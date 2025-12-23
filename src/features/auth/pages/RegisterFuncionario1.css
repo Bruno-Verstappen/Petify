@@ -1,0 +1,42 @@
+/* Podes copiar o CSS da RegisterEmpresa1.css ou importar o mesmo ficheiro */
+.biz-reg-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(180deg, #c5935f 0%, #3a3a3a 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 5%;
+  box-sizing: border-box;
+}
+
+.biz-top-link {
+  position: absolute;
+  top: 25px; right: 5%;
+  color: white;
+  font-size: clamp(0.7rem, 2vw, 0.9rem);
+  cursor: pointer;
+}
+
+.biz-step-header { display: flex; align-items: center; gap: 15px; }
+.step-digit { font-size: clamp(4rem, 10vw, 7rem); font-weight: 900; color: white; line-height: 0.8; }
+.step-digit.inactive { color: rgba(255, 255, 255, 0.3); }
+.step-connector { width: clamp(40px, 10vw, 120px); height: 3px; background-color: white; margin-top: 10px; }
+
+.biz-main-content { flex: 1; display: flex; align-items: center; justify-content: center; }
+.biz-registration-form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; }
+
+.biz-input-wrapper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.biz-input-wrapper label { color: white; font-size: 1.2rem; font-weight: bold; }
+.biz-input-field { width: 100%; padding: 10px 15px; border-radius: 8px; border: none; }
+
+.biz-footer-responsive { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; padding-bottom: 20px; }
+.footer-side-column { flex: 1; display: flex; }
+.biz-align-right { justify-content: flex-end; }
+.biz-footer-logo { color: white; font-size: clamp(2.5rem, 7vw, 5rem); font-weight: bold; text-align: center; flex: 2; margin: 0; }
+
+.biz-btn-continue {
+  background-color: black; color: white; border: none; 
+  padding: 12px 50px; border-radius: 35px; font-weight: bold; cursor: pointer;
+}

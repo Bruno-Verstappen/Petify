@@ -16,7 +16,7 @@ const AuthPage = () => {
           <button className="btn-auth-main" onClick={() => navigate('/login')}>
             Sign In
           </button>
-          <button className="btn-auth-main" onClick={() => navigate('/register')}>
+          <button className="btn-auth-main" onClick={() => navigate('/RegisterFuncionario1')}>
             Register
           </button>
         </div>

@@ -1,0 +1,16 @@
+/* Reutiliza o biz-reg-container e outros do CSS anterior */
+
+.biz-select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 15px;
+  cursor: pointer;
+}
+
+/* Garante que o texto dentro do select seja legível */
+.biz-select-field option {
+  color: #333;
+  background-color: white;
+}
