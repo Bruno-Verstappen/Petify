@@ -6,15 +6,29 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="auth-container-central">
-      <h1 className="welcome-title">Welcome</h1>
+    <div className="auth-page-wrapper">
+      {/* Título Welcome à esquerda */}
+      <h1 className="auth-welcome-text">Welcome</h1>
       
-      <div className="auth-buttons-group">
-        <button className="btn-main" onClick={() => navigate('/login')}>Sign In</button>
-        <button className="btn-main" onClick={() => navigate('/register')}>Register</button>
+      {/* Botões no centro */}
+      <div className="auth-content-center">
+        <div className="auth-buttons-group">
+          <button className="btn-auth-main" onClick={() => navigate('/login')}>
+            Sign In
+          </button>
+          <button className="btn-auth-main" onClick={() => navigate('/register')}>
+            Register
+          </button>
+        </div>
+        
+        {/* Link para empresas logo abaixo do Register */}
+        <p className="business-link" onClick={() => navigate('/RegisterEmpresa')}>
+          Do you have a business?
+        </p>
       </div>
 
-      <h2 className="petify-footer-logo">Petify</h2>
+      {/* Logótipo Petify à esquerda */}
+      <h2 className="auth-petify-logo">Petify</h2>
     </div>
   );
 };
