@@ -1,34 +1,20 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Importa o hook de navegação
-import '../../../AuthPage.css';
+import { useNavigate } from 'react-router-dom';
+import './AuthPage.css';
 
 const AuthPage = () => {
-  const navigate = useNavigate(); // Inicializa o navegador
+  const navigate = useNavigate();
 
   return (
-    <div className="auth-wrapper">
-      <h1 className="welcome-text">Welcome</h1>
+    <div className="auth-container-central">
+      <h1 className="welcome-title">Welcome</h1>
       
-      <div className="button-group">
-        {/* Adiciona o evento onClick para mudar a rota */}
-        <button 
-          className="btn-auth" 
-          onClick={() => navigate('/login')}
-        >
-          Login
-        </button>
-        
-        <button 
-          className="btn-auth" 
-          onClick={() => navigate('/register')}
-        >
-          Register
-        </button>
-        
-        <a href="#" className="business-link">Do you have a business?</a>
+      <div className="auth-buttons-group">
+        <button className="btn-main" onClick={() => navigate('/login')}>Sign In</button>
+        <button className="btn-main" onClick={() => navigate('/register')}>Register</button>
       </div>
 
-      <h2 className="petify-logo">Petify</h2>
+      <h2 className="petify-footer-logo">Petify</h2>
     </div>
   );
 };

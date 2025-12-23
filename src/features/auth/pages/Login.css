@@ -1,0 +1,94 @@
+.login-page-wrapper {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(180deg, #c5935f 0%, #3a3a3a 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start; /* Alinha Welcome e Petify à ESQUERDA */
+  padding: 60px 8%;
+  box-sizing: border-box;
+}
+
+.login-welcome-text, .login-petify-logo {
+  color: white !important;
+  font-size: 4rem;
+  font-weight: bold;
+}
+
+.top-right-link {
+  position: absolute;
+  top: 30px; right: 5%;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  text-decoration: underline;
+}
+
+.login-content-center {
+  align-self: center; /* Garante que o FORMULÁRIO fica no meio */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.login-input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.login-input-group label {
+  color: white;
+  font-size: 1.3rem;
+}
+
+.login-password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input {
+  width: 320px;
+  padding: 16px;
+  padding-right: 60px; /* Espaço para a pata não tapar o texto */
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  color: white !important;
+  font-size: 1rem;
+  outline: none;
+}
+
+.pata-icon-large {
+  position: absolute;
+  right: 12px;
+  width: 42px !important; /* Tamanho da pata corrigido */
+  height: auto;
+  cursor: pointer;
+  filter: brightness(0) invert(1); /* Garante que a pata fique branca */
+  z-index: 5;
+}
+
+.btn-enter {
+  background-color: black;
+  color: white;
+  border: none;
+  padding: 12px 60px;
+  border-radius: 25px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 20px;
+}
