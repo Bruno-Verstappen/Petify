@@ -22,7 +22,7 @@ const RegisterFuncionario2 = () => {
     // Simulação de chamada à base de dados para obter cargos
     const fetchJobs = async () => {
       // Aqui farias o fetch do Firebase/Back-end
-      const roles = ["Veterinário", "Auxiliar", "Recepcionista", "Administrador"];
+      const roles = ["Vet", "Staff"];
       setJobOptions(roles);
     };
     fetchJobs();
