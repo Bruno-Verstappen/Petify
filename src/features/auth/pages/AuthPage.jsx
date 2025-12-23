@@ -22,7 +22,7 @@ const AuthPage = () => {
         </div>
         
         {/* Link para empresas logo abaixo do Register */}
-        <p className="business-link" onClick={() => navigate('/RegisterEmpresa')}>
+        <p className="business-link" onClick={() => navigate('/RegisterEmpresa1')}>
           Do you have a business?
         </p>
       </div>
