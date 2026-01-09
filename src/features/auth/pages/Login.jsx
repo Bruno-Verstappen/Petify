@@ -1,74 +1,83 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail } from "../../../services/authService";
-import "./Login.css"; 
-import pataImg from "../../../assets/images/pata_password.png"; 
+import "./Login.css"; // Certifica-te que o CSS segue o padrão de cores (c5935f e 3a3a3a)
+import pataImg from "../../../assets/images/pata_password.png";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [showPass, setShowPass] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    setError('');
-    try {
-      await loginWithEmail(email, password);
-      navigate('/dashboard'); 
-    } catch (err) {
-      setError("Email ou senha incorretos.");
-    }
+
+    // 1. Aqui farás a autenticação com Firebase: 
+    // signInWithEmailAndPassword(auth, email, password)
+    
+    console.log("Tentativa de login com:", email);
+
+    // 2. Após a validação (simulada ou real), redireciona para a Home
+    navigate('/home');
   };
 
   return (
-    <div className="login-page-wrapper">
-      <div className="top-right-link" onClick={() => navigate('/register')}>
-        Don't have an account?
+    <div className="biz-reg-container">
+      <div className="biz-top-link" onClick={() => navigate('/RegisterFuncionario1')}>
+        Don't have an account? Register
       </div>
 
-      <h1 className="login-welcome-text">Login</h1>
-      
-      <div className="login-content-center">
-        <form onSubmit={handleLogin} className="login-form">
-          {error && <p className="login-error">{error}</p>}
+      <div className="biz-main-content">
+        <form className="biz-registration-form" onSubmit={handleLogin}>
+          <h1 style={{ color: 'white', textAlign: 'center', marginBottom: '20px' }}>Sign In</h1>
           
-          <div className="login-input-group">
+          <div className="biz-input-wrapper">
             <label>Email</label>
             <input 
               type="email" 
-              className="login-input"
+              placeholder="your email"
+              className="biz-input-field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required 
             />
           </div>
-          
-          <div className="login-input-group">
+
+          <div className="biz-input-wrapper">
             <label>Password</label>
-            <div className="login-password-container">
+            <div className="biz-pata-container">
               <input 
-                type={showPassword ? "text" : "password"} 
-                className="login-input"
+                type={showPass ? "text" : "password"} 
+                placeholder="********"
+                className="biz-input-field"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
               />
               <img 
                 src={pataImg} 
-                alt="Ver senha" 
-                className="pata-icon-large"
-                onClick={() => setShowPassword(!showPassword)}
+                className="biz-pata-icon" 
+                onClick={() => setShowPass(!showPass)} 
+                alt="toggle" 
               />
             </div>
           </div>
 
-          <button type="submit" className="btn-enter">Enter</button>
+          <button type="submit" className="biz-btn-continue" style={{ marginTop: '20px', alignSelf: 'center' }}>
+            Login
+          </button>
         </form>
       </div>
 
-      <h2 className="login-petify-logo">Petify</h2>
+      <footer className="biz-footer-responsive">
+        <div className="footer-side-column">
+           <button type="button" className="biz-btn-nav" onClick={() => navigate('/auth')}>
+            Back
+          </button>
+        </div>
+        <h2 className="biz-footer-logo">Petify</h2>
+        <div className="footer-side-column"></div>
+      </footer>
     </div>
   );
 };
