@@ -20,6 +20,15 @@ const Home = () => {
   const [clinicName, setClinicName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Estado para Analytics filtrados
+  const [stats, setStats] = useState({
+    newClients: 0,
+    petsTratados: 0,
+    consultas: 0,
+    faturamento: 0
+  });
 
   useEffect(() => {
     let unsubscribeApp = () => {};
@@ -34,7 +43,10 @@ const Home = () => {
             setClinicName(userDocSnap.data().name || "Petify Clinic");
 
             const qApp = query(collection(db, "appointments"), where("clinicId", "==", myClinicId));
+            
             unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
+              const now = new Date(); // Hora atual para comparação
+
               const appData = await Promise.all(snapshot.docs.map(async (d) => {
                 const data = d.data();
                 let petName = "Pet", petImg = "https://via.placeholder.com/80";
@@ -44,7 +56,26 @@ const Home = () => {
                 }
                 return { id: d.id, ...data, petName, petImg };
               }));
+
               setAppointments(appData);
+
+              // LÓGICA DE ANALYTICS: Apenas consultas que já ocorreram
+              const pastApps = appData.filter(app => {
+                if (!app.date || app.status !== 'confirmado') return false;
+                
+                // Converte "YYYY-MM-DD HH:mm" para Date
+                const [datePart, timePart] = app.date.split(' ');
+                const appDate = new Date(`${datePart}T${timePart}`);
+                
+                return appDate <= now; // Apenas se a hora da consulta for menor ou igual a agora
+              });
+
+              setStats({
+                newClients: [...new Set(pastApps.map(a => a.userId))].length,
+                petsTratados: [...new Set(pastApps.map(a => a.petId))].length,
+                consultas: pastApps.length,
+                faturamento: pastApps.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0)
+              });
             });
 
             const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
@@ -71,10 +102,26 @@ const Home = () => {
     try { await updateDoc(doc(db, "appointments", id), { status: newStatus }); } catch (e) { console.error(e); }
   };
 
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
   if (loading) return <div className="loading-screen"><h1>PETIFY</h1></div>;
 
   return (
     <div className="petify-container">
+      {/* HAMBURGER MENU */}
+      <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
+        <div className="menu-items">
+          <div className="menu-item" onClick={toggleMenu}>Home</div>
+          <div className="menu-item">Calendar</div>
+          <div className="menu-item">Chat</div>
+          <div className="menu-item">Clients</div>
+          <div className="menu-item">Analytics</div>
+          <div className="menu-item">Settings</div>
+          <div className="menu-item logout" onClick={() => auth.signOut()}>Logout</div>
+        </div>
+      </div>
+      {isMenuOpen && <div className="menu-overlay" onClick={toggleMenu}></div>}
+
       <header className="petify-header">
         <img src={PetifyLogo} alt="Petify" className="main-logo" />
         <div className="header-center">
@@ -86,7 +133,13 @@ const Home = () => {
         <div className="header-right-icons">
           <img src={ReadIcon} alt="mail" className="h-icon-large" />
           <img src={NotifyIcon} alt="alert" className="h-icon-large" />
-          <img src={MenuIcon} alt="menu" className="h-icon-bones-large" />
+          <img 
+            src={MenuIcon} 
+            alt="menu" 
+            className="h-icon-bones-large" 
+            onClick={toggleMenu} 
+            style={{ cursor: 'pointer' }}
+          />
         </div>
       </header>
 
@@ -142,19 +195,19 @@ const Home = () => {
           <div className="stats-focus-area">
             <div className="stats-grid-hero">
               <div className="stat-box-hero">
-                <h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.userId))].length}</h1>
+                <h1>{stats.newClients}</h1>
                 <span>new clients</span>
               </div>
               <div className="stat-box-hero">
-                <h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.petId))].length}</h1>
+                <h1>{stats.petsTratados}</h1>
                 <span>pets tratados</span>
               </div>
               <div className="stat-box-hero">
-                <h1>{appointments.filter(a=>a.status==='confirmado').length}</h1>
+                <h1>{stats.consultas}</h1>
                 <span>consultas</span>
               </div>
               <div className="stat-box-hero">
-                <h1>{appointments.filter(a=>a.status==='confirmado').reduce((acc,curr)=>acc+(Number(curr.price)||0),0)}€</h1>
+                <h1>{stats.faturamento}€</h1>
                 <span>faturamento</span>
               </div>
             </div>

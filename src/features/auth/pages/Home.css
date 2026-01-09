@@ -5,6 +5,7 @@
   padding: 10px; 
   box-sizing: border-box; 
   overflow: hidden; 
+  position: relative;
 }
 
 /* HEADER */
@@ -41,7 +42,28 @@
 
 .header-right-icons { display: flex; align-items: center; gap: 45px; }
 .h-icon-large { height: 35px; cursor: pointer; }
-.h-icon-bones-large { height: 45px; cursor: pointer; }
+.h-icon-bones-large { height: 45px; cursor: pointer; position: relative; z-index: 1200; }
+
+/* HAMBURGER MENU */
+.side-menu {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 300px;
+  height: 100%;
+  background-color: #222;
+  z-index: 1100;
+  transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px;
+}
+.side-menu.open { right: 0; }
+.menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1000; }
+.menu-item { color: white; padding: 20px 40px; font-size: 20px; font-weight: 500; cursor: pointer; border-bottom: 1px solid #333; transition: background 0.2s; }
+.menu-item:hover { background: #333; padding-left: 50px; }
+.menu-item.logout { color: #ff4d4d; margin-top: 20px; }
 
 /* LAYOUT PRINCIPAL */
 .petify-main { 
@@ -79,13 +101,7 @@
 .card-main-content { display: flex; gap: 15px; }
 .title-urgency-row { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
 
-.urgency-dot-small { 
-  width: 14px; 
-  height: 14px; 
-  border-radius: 50%; 
-  display: block; 
-  flex-shrink: 0; 
-}
+.urgency-dot-small { width: 14px; height: 14px; border-radius: 50%; display: block; flex-shrink: 0; }
 .urgency-dot-small.baixa { background-color: #4caf50 !important; }
 .urgency-dot-small.media { background-color: #ffeb3b !important; }
 .urgency-dot-small.alta { background-color: #f44336 !important; }
@@ -100,15 +116,8 @@
   border-radius: 0 0 20px 0; 
   overflow-y: auto; 
 }
-
 .stats-focus-area { width: 100%; display: flex; justify-content: center; margin-bottom: 50px; }
-
-.stats-grid-hero { 
-  display: grid; 
-  grid-template-columns: repeat(4, 220px); 
-  gap: 60px; 
-}
-
+.stats-grid-hero { display: grid; grid-template-columns: repeat(4, 220px); gap: 60px; }
 .stat-box-hero { 
   background: #aaa; 
   width: 220px; 
@@ -128,8 +137,7 @@
 .horizontal-scroll { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; }
 .pending-card-compact { background: #999; min-width: 360px; padding: 15px; display: flex; border-radius: 8px; color: white; }
 .pending-img-compact { width: 75px; height: 75px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
-
-.btn-accept-mini { background: #2e7d32; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+.btn-accept-mini { background: #2e7d32; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; margin-right: 5px;}
 .btn-refuse-mini { background: #c62828; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
 /* CHAT */
