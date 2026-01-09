@@ -99,12 +99,17 @@ const Home = () => {
               value={searchTerm} 
               onChange={(e) => setSearchTerm(e.target.value)} 
               className="input-white-bg"
-              placeholder="Filter pets..."
+              placeholder="Search pet or date..."
             />
             <img src={FilterIcon} alt="filter" className="filter-icon-img" />
           </div>
           <div className="sidebar-list">
-            {appointments.filter(a => a.petName?.toLowerCase().includes(searchTerm.toLowerCase())).map(app => (
+            {appointments
+              .filter(a => 
+                a.petName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                a.date?.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map(app => (
               <div key={app.id} className="sidebar-card-modern">
                 <div className="card-main-content">
                   <div className="pet-identity">

@@ -93,7 +93,7 @@
 .pet-avatar-large { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; }
 .pet-name-label-large { font-weight: bold; font-size: 18px; margin-top: 6px; }
 
-/* DASHBOARD E ANALYTICS (FIXED FORMAT) */
+/* DASHBOARD E ANALYTICS */
 .dashboard-content { 
   background: linear-gradient(to bottom, #bd9368, #4e4034); 
   padding: 25px; 
@@ -103,7 +103,6 @@
 
 .stats-focus-area { width: 100%; display: flex; justify-content: center; margin-bottom: 50px; }
 
-/* O SEGREDO DA FORMATAÇÃO ESTÁ AQUI: VOLTEI AOS 220PX FIXOS */
 .stats-grid-hero { 
   display: grid; 
   grid-template-columns: repeat(4, 220px); 
