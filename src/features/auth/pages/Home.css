@@ -2,7 +2,8 @@
 .petify-header { background: #333; display: flex; align-items: center; padding: 10px 20px; color: white; justify-content: space-between; border-radius: 20px 20px 0 0; }
 .logo { font-size: 24px; font-weight: bold; }
 .search-bar { background: white; border-radius: 10px; display: flex; align-items: center; padding: 2px 10px; width: 40%; }
-.search-bar input { border: none; width: 100%; outline: none; }
+.search-bar input { border: none; width: 100%; outline: none; padding: 5px; }
+.icon-img { width: 20px; height: 20px; margin-left: 10px; cursor: pointer; }
 
 .petify-main { 
   display: grid; 
@@ -15,29 +16,57 @@
 
 /* Sidebar Urgency */
 .medical-sidebar { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 15px; overflow-y: auto; }
+.sidebar-filter { background: white; border-radius: 5px; display: flex; padding: 5px; margin-bottom: 15px; align-items: center; }
+.sidebar-filter input { border: none; width: 100%; outline: none; font-size: 12px; }
+.sidebar-filter img { width: 14px; height: 14px; }
+
 .sidebar-card { background: #333; color: white; border-radius: 10px; display: flex; padding: 10px; margin-bottom: 10px; align-items: center; }
 .sidebar-card img { width: 50px; height: 50px; border-radius: 8px; margin-right: 10px; object-fit: cover; }
-.card-txt { display: flex; flex-direction: column; }
-.urgency-tag { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
-.urgency-tag.alta { color: #ff4d4d; }
-.sidebar-date { font-size: 11px; color: #ccc; margin-top: 4px; }
+.card-txt { display: flex; flex-direction: column; flex: 1; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+
+/* Bolinhas de Urgência */
+.urgency-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.urgency-dot.baixa { background-color: #4caf50; } /* Verde */
+.urgency-dot.media { background-color: #ffeb3b; } /* Amarela */
+.urgency-dot.alta { background-color: #f44336; }  /* Vermelha */
+
+.card-txt p { font-size: 11px; margin: 3px 0; color: #eee; font-style: italic; }
+.card-footer { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; margin-top: 4px; }
 
 /* Dashboard Content */
+.welcome-msg { color: white; margin-bottom: 15px; font-weight: normal; }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
 .stat-card { background: #bbb; border-radius: 5px; padding: 20px; text-align: center; color: white; }
-.stat-card h1 { font-size: 48px; margin: 0; }
+.stat-card h1 { font-size: 40px; margin: 0; }
+.stat-card span { font-size: 12px; text-transform: lowercase; }
 
-/* Pending Consultation Urgency */
+/* Pending Consultation */
+.pending-section h3 { color: white; margin-bottom: 10px; }
 .horizontal-scroll { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; }
-.pending-card { background: #bbb; min-width: 320px; display: flex; padding: 12px; border-radius: 8px; }
+.pending-card { background: #bbb; min-width: 320px; display: flex; padding: 12px; border-radius: 8px; color: #333; }
 .pending-card img { width: 90px; height: 90px; border-radius: 8px; margin-right: 12px; object-fit: cover; }
-.pending-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-.urgency-text.alta { color: #8b0000; }
-.pending-btns button { border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; background: #1a1a1a; color: white; font-size: 12px; }
+.pending-info { flex: 1; display: flex; flex-direction: column; }
+.pending-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 5px; }
+.pending-info p { margin: 2px 0; font-size: 12px; }
+
+/* Cores do Texto de Urgência */
+.urgency-text.baixa { color: #2e7d32; }
+.urgency-text.media { color: #856404; }
+.urgency-text.alta { color: #8b0000; font-weight: bold; }
+
+.pending-btns { display: flex; gap: 8px; margin-top: 10px; }
+.pending-btns button { border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; background: #1a1a1a; color: white; font-size: 12px; }
 
 /* Chat Section */
+.chat-section h3 { color: white; margin-top: 20px; margin-bottom: 10px; }
 .vertical-scroll { background: rgba(210, 201, 192, 0.9); border-radius: 10px; height: 220px; overflow-y: auto; }
-.chat-item { display: flex; padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); align-items: flex-start; }
+.chat-item { display: flex; padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); align-items: flex-start; cursor: pointer; }
 .chat-item img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid #fff; }
+.chat-body { flex: 1; }
+.chat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.chat-date { font-size: 10px; color: #555; }
+.last-msg { color: #444; font-size: 13px; margin: 0; }
 
-.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: #4e4034; color: white; }
+.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: #4e4034; color: white; font-size: 20px; }
+.empty-msg { color: #eee; font-style: italic; font-size: 14px; }
