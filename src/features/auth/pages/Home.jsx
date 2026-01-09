@@ -12,13 +12,19 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [clinicName, setClinicName] = useState("");
 
-  // --- LÓGICA DE TRATAMENTO DE DATAS ---
+  const formatDateTime = (dateField) => {
+    if (!dateField) return "";
+    let date = dateField.toDate ? dateField.toDate() : new Date(dateField);
+    if (isNaN(date.getTime())) return dateField;
+    const d = date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const h = date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+    return `${d} ${h}`;
+  };
+
   const parseDate = (dateField) => {
     if (!dateField) return 0;
     if (dateField.toMillis) return dateField.toMillis();
     const dateStr = String(dateField).toLowerCase();
-
-    if (dateStr.includes('-')) return new Date(dateStr.replace(/-/g, "/")).getTime();
     if (dateStr.includes(' de ')) {
       const meses = { 'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11 };
       const partes = dateStr.split(' ');
@@ -40,19 +46,49 @@ const Home = () => {
         try {
           const userDocSnap = await getDoc(doc(db, "users", user.uid));
           if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            const myClinicId = data.clinicId;
-            setClinicName(data.name || "Clínica");
+            const myClinicId = userDocSnap.data().clinicId;
+            setClinicName(userDocSnap.data().name || "Petify Clinic");
 
-            unsubscribeApp = onSnapshot(query(collection(db, "appointments"), where("clinicId", "==", myClinicId)), (snap) => {
-              setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const qApp = query(collection(db, "appointments"), where("clinicId", "==", myClinicId));
+            unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
+              const appData = await Promise.all(snapshot.docs.map(async (d) => {
+                const data = d.data();
+                let petName = "Pet", petImg = "https://via.placeholder.com/80", ownerName = "Cliente";
+                if (data.userId) {
+                  const uSnap = await getDoc(doc(db, "users", data.userId));
+                  if (uSnap.exists()) ownerName = uSnap.data().name;
+                }
+                if (data.petId) {
+                  const pSnap = await getDoc(doc(db, "pets", data.petId));
+                  if (pSnap.exists()) {
+                    petName = pSnap.data().name;
+                    petImg = pSnap.data().imageUrl;
+                  }
+                }
+                return { id: d.id, ...data, ownerName, petName, petImg };
+              }));
+              setAppointments(appData);
             });
 
-            unsubscribeChats = onSnapshot(query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc")), (snap) => {
-              setRecentChats(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
+            unsubscribeChats = onSnapshot(qChats, async (snap) => {
+              const chatsWithData = await Promise.all(snap.docs.map(async (docRef) => {
+                const chatData = docRef.data();
+                let petImg = "https://via.placeholder.com/45";
+                if (chatData.petId) {
+                  const pSnap = await getDoc(doc(db, "pets", chatData.petId));
+                  if (pSnap.exists()) petImg = pSnap.data().imageUrl;
+                }
+                return { id: docRef.id, ...chatData, petImg };
+              }));
+              setRecentChats(chatsWithData);
             });
           }
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (error) {
+          console.error("Erro:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     });
     return () => { unsubscribeAuth(); unsubscribeApp(); unsubscribeChats(); };
@@ -62,84 +98,57 @@ const Home = () => {
     try { await updateDoc(doc(db, "appointments", id), { status: newStatus }); } catch (e) { console.error(e); }
   };
 
-  // --- CÁLCULOS ---
-  const agoraMs = new Date().getTime();
-  const realizadas = appointments.filter(a => a.status === 'confirmado' && parseDate(a.date) <= agoraMs);
-  const numPets = [...new Set(realizadas.map(a => a.petId))].length;
-  const numClientes = [...new Set(realizadas.map(a => a.userId))].length;
-  const totalReceita = realizadas.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
-  const pendentes = appointments.filter(a => a.status === 'pendente');
+  const realizadas = appointments.filter(a => a.status === 'confirmado' && parseDate(a.date) <= new Date().getTime());
 
-  if (loading) return <div className="loading">Petify is loading...</div>;
+  if (loading) return <div className="loading-screen">Petify loading...</div>;
 
   return (
     <div className="petify-container">
-      {/* BARRA DE TOPO */}
       <header className="petify-header">
         <div className="logo">Petify</div>
-        <div className="search-bar">
-          <input type="text" placeholder="" />
-          <img src="/icons/Search_tools.png" alt="Search" />
-        </div>
-        <div className="header-icons">
-          <img src="/icons/Marcar_lido.png" alt="Messages" />
-          <img src="/icons/Notifications.png" alt="Alerts" />
-          <img src="/icons/Hamburger_menu.png" alt="Menu" />
-        </div>
+        <div className="search-bar"><input type="text" placeholder="Search..." /></div>
       </header>
-
       <main className="petify-main">
-        {/* COLUNA ESQUERDA - MEDICAL CONSULTATION */}
+        {/* Sidebar: Medical Consultation */}
         <aside className="medical-sidebar">
           <h3>Medical Consultation</h3>
-          <div className="search-filter">
-            <input type="text" /><img src="/icons/Search_tools.png" alt="filter" />
-          </div>
-          <div className="consultation-list">
-             {/* Exemplo de item lateral conforme print */}
-             {appointments.slice(0, 3).map(app => (
-               <div key={app.id} className="sidebar-card">
-                  <img src={app.petImage || "https://via.placeholder.com/50"} alt="pet" />
-                  <div className="card-info">
-                    <h4>Vactination</h4>
-                    <p>"{app.reason || "Consulta de rotina..."}"</p>
-                    <div className="card-footer">
-                      <span>{app.date?.split(' ')[0]}</span>
-                      <span>{app.date?.split(' ')[6]?.substring(0, 5)}</span>
-                    </div>
-                  </div>
-               </div>
-             ))}
+          <div className="sidebar-list">
+            {appointments.slice(0, 10).map(app => (
+              <div key={app.id} className="sidebar-card">
+                <img src={app.petImg} alt="pet" />
+                <div className="card-txt">
+                  <strong>{app.reason || "Vactination"}</strong>
+                  <p>Pet: {app.petName}</p>
+                  <span className={`urgency-tag ${app.urgency?.toLowerCase()}`}>Urgency: {app.urgency || "média"}</span>
+                  <span className="sidebar-date">{formatDateTime(app.date)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </aside>
 
-        {/* CONTEÚDO CENTRAL */}
         <section className="dashboard-content">
-          <h2>Good morning ({clinicName})</h2>
-          
-          {/* ESTATÍSTICAS */}
+          <h2 className="welcome-msg">Good morning ({clinicName})</h2>
           <div className="stats-grid">
-            <div className="stat-card"><h1>{numClientes}</h1><span>new clients</span></div>
-            <div className="stat-card"><h1>{numPets}</h1><span>pets tratados</span></div>
+            <div className="stat-card"><h1>{[...new Set(realizadas.map(a => a.userId))].length}</h1><span>new clients</span></div>
+            <div className="stat-card"><h1>{[...new Set(realizadas.map(a => a.petId))].length}</h1><span>pets tratados</span></div>
             <div className="stat-card"><h1>{realizadas.length}</h1><span>consultas dadas</span></div>
-            <div className="stat-card"><h1>{totalReceita.toFixed(0)}€</h1><span>faturamento</span></div>
+            <div className="stat-card"><h1>{realizadas.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0).toFixed(0)}€</h1><span>faturamento</span></div>
           </div>
-
-          {/* PENDING CONSULTATION - SCROLL HORIZONTAL */}
+          
           <div className="pending-section">
             <h3>Pending Consultation</h3>
             <div className="horizontal-scroll">
-              {pendentes.map(app => (
+              {appointments.filter(a => a.status === 'pendente').map(app => (
                 <div key={app.id} className="pending-card">
-                  <img src={app.petImage || "https://via.placeholder.com/80"} alt="pet" />
+                  <img src={app.petImg} alt="pet" className="pet-thumb" />
                   <div className="pending-info">
-                    <p className="type">Vactination</p>
-                    <p className="date-time">{app.date?.split(' ')[0]} {app.date?.split(' ')[6]?.substring(0,5)}</p>
-                    <p>pet name: <strong>{app.petName || "Bobi"}</strong></p>
-                    <p>owner: <strong>{app.userName || "Paulo Santos"}</strong></p>
-                    <div className="pending-actions">
-                      <button className="btn-accept" onClick={() => handleStatusUpdate(app.id, 'confirmado')}>Accept</button>
-                      <button className="btn-refuse" onClick={() => handleStatusUpdate(app.id, 'recusado')}>refuse</button>
+                    <p>pet: <strong>{app.petName}</strong></p>
+                    <p>urgency: <strong className={`urgency-text ${app.urgency?.toLowerCase()}`}>{app.urgency || "média"}</strong></p>
+                    <p>data: <strong>{formatDateTime(app.date)}</strong></p> 
+                    <div className="pending-btns">
+                      <button className="accept" onClick={() => handleStatusUpdate(app.id, 'confirmado')}>Accept</button>
+                      <button className="refuse" onClick={() => handleStatusUpdate(app.id, 'recusado')}>Refuse</button>
                     </div>
                   </div>
                 </div>
@@ -147,19 +156,18 @@ const Home = () => {
             </div>
           </div>
 
-          {/* CHAT - SCROLL VERTICAL */}
           <div className="chat-section">
             <h3>Chat</h3>
             <div className="vertical-scroll">
               {recentChats.map(chat => (
-                <div key={chat.id} className="chat-line">
-                  <img src={chat.petImage || "https://via.placeholder.com/40"} alt="pet" />
-                  <div className="chat-content">
-                    <div className="chat-header">
-                      <strong>{chat.petName || "Miau"}</strong>
-                      <span className="chat-date">28-12-2026</span>
+                <div key={chat.id} className="chat-item">
+                  <img src={chat.petImg} alt="pet" />
+                  <div className="chat-body">
+                    <div className="chat-top">
+                      <strong>{chat.userName}</strong>
+                      <span className="chat-date">{formatDateTime(chat.updatedAt)}</span>
                     </div>
-                    <p><strong>{chat.userName}:</strong> {chat.lastMessage}</p>
+                    <p>{chat.lastMessage}</p>
                   </div>
                 </div>
               ))}

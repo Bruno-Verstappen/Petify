@@ -3,29 +3,41 @@
 .logo { font-size: 24px; font-weight: bold; }
 .search-bar { background: white; border-radius: 10px; display: flex; align-items: center; padding: 2px 10px; width: 40%; }
 .search-bar input { border: none; width: 100%; outline: none; }
-.header-icons img { height: 20px; margin-left: 15px; cursor: pointer; filter: invert(1); }
 
-.petify-main { display: grid; grid-template-columns: 280px 1fr; gap: 20px; padding: 20px; background: linear-gradient(to bottom, #bd9368, #4e4034); height: calc(100vh - 60px); }
+.petify-main { 
+  display: grid; 
+  grid-template-columns: 280px 1fr; 
+  gap: 20px; 
+  padding: 20px; 
+  background: linear-gradient(to bottom, #bd9368, #4e4034); 
+  height: calc(100vh - 60px); 
+}
 
-/* Sidebar */
-.medical-sidebar { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 15px; }
-.sidebar-card { background: #333; color: white; border-radius: 10px; display: flex; padding: 10px; margin-bottom: 10px; }
-.sidebar-card img { width: 50px; height: 50px; border-radius: 5px; margin-right: 10px; }
+/* Sidebar Urgency */
+.medical-sidebar { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 15px; overflow-y: auto; }
+.sidebar-card { background: #333; color: white; border-radius: 10px; display: flex; padding: 10px; margin-bottom: 10px; align-items: center; }
+.sidebar-card img { width: 50px; height: 50px; border-radius: 8px; margin-right: 10px; object-fit: cover; }
+.card-txt { display: flex; flex-direction: column; }
+.urgency-tag { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
+.urgency-tag.alta { color: #ff4d4d; }
+.sidebar-date { font-size: 11px; color: #ccc; margin-top: 4px; }
 
 /* Dashboard Content */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
 .stat-card { background: #bbb; border-radius: 5px; padding: 20px; text-align: center; color: white; }
-.stat-card h1 { font-size: 60px; margin: 0; }
+.stat-card h1 { font-size: 48px; margin: 0; }
 
-/* Scroll Horizontal */
-.horizontal-scroll { display: flex; overflow-x: auto; gap: 20px; padding-bottom: 10px; }
-.pending-card { background: #bbb; min-width: 300px; display: flex; padding: 10px; border-radius: 5px; }
-.pending-card img { width: 80px; height: 80px; border-radius: 5px; margin-right: 10px; }
-.btn-accept { background: #2d5a27; color: white; border: none; padding: 2px 10px; border-radius: 10px; cursor: pointer; }
-.btn-refuse { background: #a52a2a; color: white; border: none; padding: 2px 10px; border-radius: 10px; cursor: pointer; }
+/* Pending Consultation Urgency */
+.horizontal-scroll { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; }
+.pending-card { background: #bbb; min-width: 320px; display: flex; padding: 12px; border-radius: 8px; }
+.pending-card img { width: 90px; height: 90px; border-radius: 8px; margin-right: 12px; object-fit: cover; }
+.pending-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.urgency-text.alta { color: #8b0000; }
+.pending-btns button { border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; background: #1a1a1a; color: white; font-size: 12px; }
 
-/* Chat Scroll Vertical */
-.vertical-scroll { background: rgba(0,0,0,0.5); border-radius: 10px; height: 200px; overflow-y: auto; }
-.chat-line { display: flex; padding: 10px; border-bottom: 1px solid #444; color: white; align-items: center; }
-.chat-line img { width: 40px; height: 40px; border-radius: 5px; margin-right: 10px; }
-.chat-header { display: flex; justify-content: space-between; width: 100%; }
+/* Chat Section */
+.vertical-scroll { background: rgba(210, 201, 192, 0.9); border-radius: 10px; height: 220px; overflow-y: auto; }
+.chat-item { display: flex; padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); align-items: flex-start; }
+.chat-item img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid #fff; }
+
+.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: #4e4034; color: white; }
