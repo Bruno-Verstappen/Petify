@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import './Home.css';
 
-// Importações baseadas na tua estrutura
+// Assets
 import PetifyLogo from '../../../assets/images/Petify.png';
 import SearchIcon from '../../../assets/images/Search_tools.png';
 import ReadIcon from '../../../assets/images/Marcar_lido.png';
@@ -17,9 +17,9 @@ import MenuIcon from '../../../assets/images/Hamburger_menu.png';
 const Home = () => {
   const [appointments, setAppointments] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [clinicName, setClinicName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let unsubscribeApp = () => {};
@@ -37,16 +37,12 @@ const Home = () => {
             unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
               const appData = await Promise.all(snapshot.docs.map(async (d) => {
                 const data = d.data();
-                let petName = "Pet", petImg = "https://via.placeholder.com/80", ownerName = "Dono";
+                let petName = "Pet", petImg = "https://via.placeholder.com/80";
                 if (data.petId) {
                   const pSnap = await getDoc(doc(db, "pets", data.petId));
                   if (pSnap.exists()) { petName = pSnap.data().name; petImg = pSnap.data().imageUrl; }
                 }
-                if (data.userId) {
-                  const uSnap = await getDoc(doc(db, "users", data.userId));
-                  if (uSnap.exists()) ownerName = uSnap.data().name;
-                }
-                return { id: d.id, ...data, petName, petImg, ownerName };
+                return { id: d.id, ...data, petName, petImg };
               }));
               setAppointments(appData);
             });
@@ -75,15 +71,6 @@ const Home = () => {
     try { await updateDoc(doc(db, "appointments", id), { status: newStatus }); } catch (e) { console.error(e); }
   };
 
-  const filteredApps = appointments.filter(app => 
-    app.petName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const normalizeUrgency = (text) => {
-    if (!text) return 'media';
-    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  };
-
   if (loading) return <div className="loading-screen"><h1>PETIFY</h1></div>;
 
   return (
@@ -91,39 +78,51 @@ const Home = () => {
       <header className="petify-header">
         <img src={PetifyLogo} alt="Petify" className="main-logo" />
         <div className="header-center">
-          <div className="search-bar-modern">
-            <input type="text" />
-            <img src={SearchIcon} alt="search" className="icon-search" />
+          <div className="search-bar-extra-large">
+            <input type="text" placeholder="Search..." className="input-white-bg" />
+            <img src={SearchIcon} alt="search" className="icon-search-header" />
           </div>
         </div>
         <div className="header-right-icons">
-          <img src={ReadIcon} alt="mail" className="h-icon" />
-          <img src={NotifyIcon} alt="alert" className="h-icon" />
-          <img src={MenuIcon} alt="menu" className="h-icon-bones" />
+          <img src={ReadIcon} alt="mail" className="h-icon-large" />
+          <img src={NotifyIcon} alt="alert" className="h-icon-large" />
+          <img src={MenuIcon} alt="menu" className="h-icon-bones-large" />
         </div>
       </header>
 
       <main className="petify-main">
-        {/* Sidebar com scroll independente */}
         <aside className="medical-sidebar">
-          <h3>Medical Consultation</h3>
+          <h3 className="sidebar-title">Medical Consultation</h3>
           <div className="sidebar-filter-wrapper">
-            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <input 
+              type="text" 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="input-white-bg"
+              placeholder="Filter pets..."
+            />
             <img src={FilterIcon} alt="filter" className="filter-icon-img" />
           </div>
           <div className="sidebar-list">
-            {filteredApps.map(app => (
+            {appointments.filter(a => a.petName?.toLowerCase().includes(searchTerm.toLowerCase())).map(app => (
               <div key={app.id} className="sidebar-card-modern">
-                <div className="card-top-row">
-                  <img src={app.petImg} alt="pet" className="pet-avatar" />
-                  <div className="pet-info-header">
-                    <strong>Vactination</strong>
-                    <span className={`urgency-dot-small ${normalizeUrgency(app.urgency)}`}></span>
+                <div className="card-main-content">
+                  <div className="pet-identity">
+                    <img src={app.petImg} alt="pet" className="pet-avatar-large" />
+                    <p className="pet-name-label-large">{app.petName}</p>
+                  </div>
+                  <div className="appointment-details">
+                    <div className="title-urgency-row">
+                      <strong className="app-type-text">Vaccination</strong>
+                      <span className={`urgency-dot-small ${app.urgency 
+                        ? app.urgency.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                        : 'baixa'}`}>
+                      </span>
+                    </div>
+                    <p className="reason-preview-large">"{app.reason || 'Sem descrição'}"</p>
                   </div>
                 </div>
-                <p className="pet-name-label">{app.petName}</p>
-                <p className="reason-preview">"{app.reason}"</p>
-                <div className="card-bottom-row">
+                <div className="card-bottom-row-large">
                   <span>{app.date?.split(' ')[0]}</span>
                   <span>{app.date?.split(' ')[1]}</span>
                 </div>
@@ -133,24 +132,41 @@ const Home = () => {
         </aside>
 
         <section className="dashboard-content">
-          <h2 className="welcome-msg">Good morning (<span>{clinicName}</span>)</h2>
-          <div className="stats-grid-modern">
-            <div className="stat-box"><h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.userId))].length}</h1><span>new clients</span></div>
-            <div className="stat-box"><h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.petId))].length}</h1><span>pets tratados</span></div>
-            <div className="stat-box"><h1>{appointments.filter(a=>a.status==='confirmado').length}</h1><span>consultas</span></div>
-            <div className="stat-box"><h1>{appointments.filter(a=>a.status==='confirmado').reduce((acc,curr)=>acc+(Number(curr.price)||0),0)}€</h1><span>faturamento</span></div>
+          <h2 className="welcome-msg-extra">Good morning (<span>{clinicName}</span>)</h2>
+          
+          <div className="stats-focus-area">
+            <div className="stats-grid-hero">
+              <div className="stat-box-hero">
+                <h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.userId))].length}</h1>
+                <span>new clients</span>
+              </div>
+              <div className="stat-box-hero">
+                <h1>{[...new Set(appointments.filter(a=>a.status==='confirmado').map(a=>a.petId))].length}</h1>
+                <span>pets tratados</span>
+              </div>
+              <div className="stat-box-hero">
+                <h1>{appointments.filter(a=>a.status==='confirmado').length}</h1>
+                <span>consultas</span>
+              </div>
+              <div className="stat-box-hero">
+                <h1>{appointments.filter(a=>a.status==='confirmado').reduce((acc,curr)=>acc+(Number(curr.price)||0),0)}€</h1>
+                <span>faturamento</span>
+              </div>
+            </div>
           </div>
 
           <div className="pending-section-modern">
             <h3>Pending Consultation</h3>
             <div className="horizontal-scroll">
               {appointments.filter(a => a.status === 'pendente').map(app => (
-                <div key={app.id} className="pending-card-modern">
-                  <img src={app.petImg} alt="pet" className="pending-img" />
+                <div key={app.id} className="pending-card-compact">
+                  <img src={app.petImg} alt="pet" className="pending-img-compact" />
                   <div className="pending-details">
-                    <div className="pending-row-one"><span>Vactination</span><span>{app.date}</span></div>
+                    <div className="pending-row-one">
+                      <span className="type-label">Vaccination</span>
+                      <span className="date-label">{app.date}</span>
+                    </div>
                     <p>pet name: {app.petName}</p>
-                    <p>owner: {app.ownerName}</p>
                     <div className="pending-actions">
                       <button className="btn-accept-mini" onClick={() => handleStatusUpdate(app.id, 'confirmado')}>Accept</button>
                       <button className="btn-refuse-mini" onClick={() => handleStatusUpdate(app.id, 'recusado')}>Refuse</button>
@@ -170,9 +186,9 @@ const Home = () => {
                   <div className="chat-content-text">
                     <div className="chat-header-info">
                       <strong>{chat.petName}</strong>
-                      <span className="chat-time">22:21</span>
+                      <span className="chat-time">28-12-2026</span>
                     </div>
-                    <p>{chat.userName}: {chat.lastMessage}</p>
+                    <p>{chat.lastMessage}</p>
                   </div>
                 </div>
               ))}
