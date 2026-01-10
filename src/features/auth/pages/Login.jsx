@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "./Login.css"; // Certifica-te que o CSS segue o padrão de cores (c5935f e 3a3a3a)
+import { auth } from '../../../config/firebase'; // Importa a tua configuração
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import "./Login.css";
 import pataImg from "../../../assets/images/pata_password.png";
 
 const Login = () => {
@@ -8,17 +10,27 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
 
-    // 1. Aqui farás a autenticação com Firebase: 
-    // signInWithEmailAndPassword(auth, email, password)
-    
-    console.log("Tentativa de login com:", email);
-
-    // 2. Após a validação (simulada ou real), redireciona para a Home
-    navigate('/home');
+    try {
+      // 1. Autenticação real com Firebase
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // 2. Se o login tiver sucesso, redireciona
+      navigate('/home');
+    } catch (err) {
+      console.error("Erro no login:", err.code);
+      // Tratamento de erros básico
+      if (err.code === 'auth/invalid-credential') {
+        setError('Email ou password incorretos.');
+      } else {
+        setError('Ocorreu um erro ao entrar. Tenta novamente.');
+      }
+    }
   };
 
   return (
@@ -30,6 +42,8 @@ const Login = () => {
       <div className="biz-main-content">
         <form className="biz-registration-form" onSubmit={handleLogin}>
           <h1 style={{ color: 'white', textAlign: 'center', marginBottom: '20px' }}>Sign In</h1>
+          
+          {error && <p style={{ color: '#ff4d4d', textAlign: 'center' }}>{error}</p>}
           
           <div className="biz-input-wrapper">
             <label>Email</label>

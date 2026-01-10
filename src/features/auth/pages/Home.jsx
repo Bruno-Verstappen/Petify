@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase'; 
 import { 
   doc, getDoc, collection, query, where, 
@@ -15,6 +16,7 @@ import FilterIcon from '../../../assets/images/Filter.png';
 import MenuIcon from '../../../assets/images/Hamburger_menu.png';
 
 const Home = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [clinicName, setClinicName] = useState("");
@@ -22,7 +24,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Estado para Analytics filtrados
   const [stats, setStats] = useState({
     newClients: 0,
     petsTratados: 0,
@@ -42,10 +43,10 @@ const Home = () => {
             const myClinicId = userDocSnap.data().clinicId || user.uid; 
             setClinicName(userDocSnap.data().name || "Petify Clinic");
 
+            // Listener de Consultas
             const qApp = query(collection(db, "appointments"), where("clinicId", "==", myClinicId));
-            
             unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
-              const now = new Date(); // Hora atual para comparação
+              const now = new Date();
 
               const appData = await Promise.all(snapshot.docs.map(async (d) => {
                 const data = d.data();
@@ -59,15 +60,12 @@ const Home = () => {
 
               setAppointments(appData);
 
-              // LÓGICA DE ANALYTICS: Apenas consultas que já ocorreram
+              // LÓGICA ANALYTICS: Só conta se (Status Confirmado) E (Data/Hora <= Agora)
               const pastApps = appData.filter(app => {
                 if (!app.date || app.status !== 'confirmado') return false;
-                
-                // Converte "YYYY-MM-DD HH:mm" para Date
                 const [datePart, timePart] = app.date.split(' ');
                 const appDate = new Date(`${datePart}T${timePart}`);
-                
-                return appDate <= now; // Apenas se a hora da consulta for menor ou igual a agora
+                return appDate <= now;
               });
 
               setStats({
@@ -76,8 +74,11 @@ const Home = () => {
                 consultas: pastApps.length,
                 faturamento: pastApps.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0)
               });
+              
+              setLoading(false);
             });
 
+            // Listener de Chats
             const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
             unsubscribeChats = onSnapshot(qChats, async (snap) => {
               const chatsComDados = await Promise.all(snap.docs.map(async (d) => {
@@ -91,12 +92,23 @@ const Home = () => {
               }));
               setRecentChats(chatsComDados);
             });
+
+          } else {
+            setLoading(false);
           }
-        } catch (error) { console.error(error); } finally { setLoading(false); }
+        } catch (error) { 
+          console.error(error); 
+          setLoading(false); 
+        }
+      } else {
+        // Se não houver user, volta para o login para não ficar no ecrã de loading
+        navigate('/login');
+        setLoading(false);
       }
     });
+
     return () => { unsubscribeAuth(); unsubscribeApp(); unsubscribeChats(); };
-  }, []);
+  }, [navigate]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try { await updateDoc(doc(db, "appointments", id), { status: newStatus }); } catch (e) { console.error(e); }
@@ -108,7 +120,6 @@ const Home = () => {
 
   return (
     <div className="petify-container">
-      {/* HAMBURGER MENU */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={toggleMenu}>Home</div>
@@ -133,13 +144,7 @@ const Home = () => {
         <div className="header-right-icons">
           <img src={ReadIcon} alt="mail" className="h-icon-large" />
           <img src={NotifyIcon} alt="alert" className="h-icon-large" />
-          <img 
-            src={MenuIcon} 
-            alt="menu" 
-            className="h-icon-bones-large" 
-            onClick={toggleMenu} 
-            style={{ cursor: 'pointer' }}
-          />
+          <img src={MenuIcon} alt="menu" className="h-icon-bones-large" onClick={toggleMenu} style={{cursor:'pointer'}} />
         </div>
       </header>
 
