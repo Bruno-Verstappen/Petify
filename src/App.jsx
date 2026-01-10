@@ -6,8 +6,8 @@ import RegisterEmpresa1 from './features/auth/pages/RegisterEmpresa1.jsx';
 import RegisterEmpresa2 from './features/auth/pages/RegisterEmpresa2.jsx';
 import RegisterFuncionario1 from './features/auth/pages/RegisterFuncionario1.jsx';
 import RegisterFuncionario2 from './features/auth/pages/RegisterFuncionario2.jsx';
-import Home from './features/auth/pages/Home.jsx'; // Importa a tua nova Home
-
+import Home from './features/auth/pages/Home.jsx';    
+import Chat from './features/auth/pages/Chat.jsx';
 function App() {
   return (
     <Routes>
@@ -23,8 +23,9 @@ function App() {
       <Route path="/RegisterFuncionario1" element={<RegisterFuncionario1 />} />
       <Route path="/RegisterFuncionario2" element={<RegisterFuncionario2 />} />
       
-      {/* Rota HOME (Destino Final) */}
+
       <Route path="/home" element={<Home />} />
+      <Route path="/chat" element={<Chat />} />
       
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>

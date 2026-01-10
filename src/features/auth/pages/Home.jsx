@@ -43,7 +43,7 @@ const Home = () => {
             const myClinicId = userDocSnap.data().clinicId || user.uid; 
             setClinicName(userDocSnap.data().name || "Petify Clinic");
 
-            // Listener de Consultas
+            // 1. LISTENER DE CONSULTAS (Com Filtro de Tempo para Analytics)
             const qApp = query(collection(db, "appointments"), where("clinicId", "==", myClinicId));
             unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
               const now = new Date();
@@ -53,14 +53,17 @@ const Home = () => {
                 let petName = "Pet", petImg = "https://via.placeholder.com/80";
                 if (data.petId) {
                   const pSnap = await getDoc(doc(db, "pets", data.petId));
-                  if (pSnap.exists()) { petName = pSnap.data().name; petImg = pSnap.data().imageUrl; }
+                  if (pSnap.exists()) { 
+                    petName = pSnap.data().name; 
+                    petImg = pSnap.data().imageUrl; 
+                  }
                 }
                 return { id: d.id, ...data, petName, petImg };
               }));
 
               setAppointments(appData);
 
-              // LÓGICA ANALYTICS: Só conta se (Status Confirmado) E (Data/Hora <= Agora)
+              // Lógica Analytics: Apenas confirmados e com data inferior/igual a agora
               const pastApps = appData.filter(app => {
                 if (!app.date || app.status !== 'confirmado') return false;
                 const [datePart, timePart] = app.date.split(' ');
@@ -78,8 +81,11 @@ const Home = () => {
               setLoading(false);
             });
 
-            // Listener de Chats
-            const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
+            // 2. LISTENER DE CHATS
+            const qChats = query(collection(db, "chats"), 
+              where("clinicId", "==", myClinicId), 
+              orderBy("updatedAt", "desc")
+            );
             unsubscribeChats = onSnapshot(qChats, async (snap) => {
               const chatsComDados = await Promise.all(snap.docs.map(async (d) => {
                 const chatData = d.data();
@@ -94,14 +100,13 @@ const Home = () => {
             });
 
           } else {
-            setLoading(false);
+            setLoading(false); 
           }
         } catch (error) { 
-          console.error(error); 
+          console.error("Erro ao carregar dados:", error); 
           setLoading(false); 
         }
       } else {
-        // Se não houver user, volta para o login para não ficar no ecrã de loading
         navigate('/login');
         setLoading(false);
       }
@@ -120,11 +125,12 @@ const Home = () => {
 
   return (
     <div className="petify-container">
+      {/* HAMBURGER MENU */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
-          <div className="menu-item" onClick={toggleMenu}>Home</div>
+          <div className="menu-item" onClick={() => { navigate('/home'); toggleMenu(); }}>Home</div>
           <div className="menu-item">Calendar</div>
-          <div className="menu-item">Chat</div>
+          <div className="menu-item" onClick={() => navigate('/chat')}>Chat</div>
           <div className="menu-item">Clients</div>
           <div className="menu-item">Analytics</div>
           <div className="menu-item">Settings</div>
@@ -144,7 +150,13 @@ const Home = () => {
         <div className="header-right-icons">
           <img src={ReadIcon} alt="mail" className="h-icon-large" />
           <img src={NotifyIcon} alt="alert" className="h-icon-large" />
-          <img src={MenuIcon} alt="menu" className="h-icon-bones-large" onClick={toggleMenu} style={{cursor:'pointer'}} />
+          <img 
+            src={MenuIcon} 
+            alt="menu" 
+            className="h-icon-bones-large" 
+            onClick={toggleMenu} 
+            style={{ cursor: 'pointer' }} 
+          />
         </div>
       </header>
 
@@ -242,7 +254,7 @@ const Home = () => {
 
           <div className="chat-section-modern">
             <h3>Chat</h3>
-            <div className="chat-list-bg">
+            <div className="chat-list-bg" onClick={() => navigate('/chat')} style={{cursor: 'pointer'}}>
               {recentChats.map(chat => (
                 <div key={chat.id} className="chat-row-item">
                   <img src={chat.petImg} alt="pet" />
