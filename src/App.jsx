@@ -8,6 +8,7 @@ import RegisterFuncionario1 from './features/auth/pages/RegisterFuncionario1.jsx
 import RegisterFuncionario2 from './features/auth/pages/RegisterFuncionario2.jsx';
 import Home from './features/auth/pages/Home.jsx';    
 import Chat from './features/auth/pages/Chat.jsx';
+import Calendar from './features/auth/pages/Calendar.jsx';
 function App() {
   return (
     <Routes>
@@ -26,6 +27,7 @@ function App() {
 
       <Route path="/home" element={<Home />} />
       <Route path="/chat" element={<Chat />} />
+      <Route path="/calendar" element={<Calendar />} />
       
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>

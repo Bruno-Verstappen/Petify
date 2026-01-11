@@ -43,27 +43,20 @@ const Home = () => {
             const myClinicId = userDocSnap.data().clinicId || user.uid; 
             setClinicName(userDocSnap.data().name || "Petify Clinic");
 
-            // 1. LISTENER DE CONSULTAS (Com Filtro de Tempo para Analytics)
             const qApp = query(collection(db, "appointments"), where("clinicId", "==", myClinicId));
             unsubscribeApp = onSnapshot(qApp, async (snapshot) => {
               const now = new Date();
-
               const appData = await Promise.all(snapshot.docs.map(async (d) => {
                 const data = d.data();
                 let petName = "Pet", petImg = "https://via.placeholder.com/80";
                 if (data.petId) {
                   const pSnap = await getDoc(doc(db, "pets", data.petId));
-                  if (pSnap.exists()) { 
-                    petName = pSnap.data().name; 
-                    petImg = pSnap.data().imageUrl; 
-                  }
+                  if (pSnap.exists()) { petName = pSnap.data().name; petImg = pSnap.data().imageUrl; }
                 }
                 return { id: d.id, ...data, petName, petImg };
               }));
-
               setAppointments(appData);
 
-              // Lógica Analytics: Apenas confirmados e com data inferior/igual a agora
               const pastApps = appData.filter(app => {
                 if (!app.date || app.status !== 'confirmado') return false;
                 const [datePart, timePart] = app.date.split(' ');
@@ -77,15 +70,10 @@ const Home = () => {
                 consultas: pastApps.length,
                 faturamento: pastApps.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0)
               });
-              
               setLoading(false);
             });
 
-            // 2. LISTENER DE CHATS
-            const qChats = query(collection(db, "chats"), 
-              where("clinicId", "==", myClinicId), 
-              orderBy("updatedAt", "desc")
-            );
+            const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
             unsubscribeChats = onSnapshot(qChats, async (snap) => {
               const chatsComDados = await Promise.all(snap.docs.map(async (d) => {
                 const chatData = d.data();
@@ -98,20 +86,13 @@ const Home = () => {
               }));
               setRecentChats(chatsComDados);
             });
-
-          } else {
-            setLoading(false); 
-          }
-        } catch (error) { 
-          console.error("Erro ao carregar dados:", error); 
-          setLoading(false); 
-        }
+          } else { setLoading(false); }
+        } catch (error) { console.error(error); setLoading(false); }
       } else {
         navigate('/login');
         setLoading(false);
       }
     });
-
     return () => { unsubscribeAuth(); unsubscribeApp(); unsubscribeChats(); };
   }, [navigate]);
 
@@ -125,12 +106,12 @@ const Home = () => {
 
   return (
     <div className="petify-container">
-      {/* HAMBURGER MENU */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={() => { navigate('/home'); toggleMenu(); }}>Home</div>
-          <div className="menu-item">Calendar</div>
-          <div className="menu-item" onClick={() => navigate('/chat')}>Chat</div>
+          {/* ALTERAÇÃO AQUI: ROTA PARA CALENDAR */}
+          <div className="menu-item" onClick={() => { navigate('/calendar'); toggleMenu(); }}>Calendar</div>
+          <div className="menu-item" onClick={() => { navigate('/chat'); toggleMenu(); }}>Chat</div>
           <div className="menu-item">Clients</div>
           <div className="menu-item">Analytics</div>
           <div className="menu-item">Settings</div>
@@ -150,13 +131,7 @@ const Home = () => {
         <div className="header-right-icons">
           <img src={ReadIcon} alt="mail" className="h-icon-large" />
           <img src={NotifyIcon} alt="alert" className="h-icon-large" />
-          <img 
-            src={MenuIcon} 
-            alt="menu" 
-            className="h-icon-bones-large" 
-            onClick={toggleMenu} 
-            style={{ cursor: 'pointer' }} 
-          />
+          <img src={MenuIcon} alt="menu" className="h-icon-bones-large" onClick={toggleMenu} style={{ cursor: 'pointer' }} />
         </div>
       </header>
 
@@ -175,10 +150,7 @@ const Home = () => {
           </div>
           <div className="sidebar-list">
             {appointments
-              .filter(a => 
-                a.petName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                a.date?.toLowerCase().includes(searchTerm.toLowerCase())
-              )
+              .filter(a => a.petName?.toLowerCase().includes(searchTerm.toLowerCase()) || a.date?.toLowerCase().includes(searchTerm.toLowerCase()))
               .map(app => (
               <div key={app.id} className="sidebar-card-modern">
                 <div className="card-main-content">
@@ -189,10 +161,7 @@ const Home = () => {
                   <div className="appointment-details">
                     <div className="title-urgency-row">
                       <strong className="app-type-text">Vaccination</strong>
-                      <span className={`urgency-dot-small ${app.urgency 
-                        ? app.urgency.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-                        : 'baixa'}`}>
-                      </span>
+                      <span className={`urgency-dot-small ${app.urgency ? app.urgency.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : 'baixa'}`}></span>
                     </div>
                     <p className="reason-preview-large">"{app.reason || 'Sem descrição'}"</p>
                   </div>
@@ -208,25 +177,12 @@ const Home = () => {
 
         <section className="dashboard-content">
           <h2 className="welcome-msg-extra">Good morning (<span>{clinicName}</span>)</h2>
-          
           <div className="stats-focus-area">
             <div className="stats-grid-hero">
-              <div className="stat-box-hero">
-                <h1>{stats.newClients}</h1>
-                <span>new clients</span>
-              </div>
-              <div className="stat-box-hero">
-                <h1>{stats.petsTratados}</h1>
-                <span>pets tratados</span>
-              </div>
-              <div className="stat-box-hero">
-                <h1>{stats.consultas}</h1>
-                <span>consultas</span>
-              </div>
-              <div className="stat-box-hero">
-                <h1>{stats.faturamento}€</h1>
-                <span>faturamento</span>
-              </div>
+              <div className="stat-box-hero"><h1>{stats.newClients}</h1><span>new clients</span></div>
+              <div className="stat-box-hero"><h1>{stats.petsTratados}</h1><span>pets tratados</span></div>
+              <div className="stat-box-hero"><h1>{stats.consultas}</h1><span>consultas</span></div>
+              <div className="stat-box-hero"><h1>{stats.faturamento}€</h1><span>faturamento</span></div>
             </div>
           </div>
 
@@ -237,10 +193,7 @@ const Home = () => {
                 <div key={app.id} className="pending-card-compact">
                   <img src={app.petImg} alt="pet" className="pending-img-compact" />
                   <div className="pending-details">
-                    <div className="pending-row-one">
-                      <span className="type-label">Vaccination</span>
-                      <span className="date-label">{app.date}</span>
-                    </div>
+                    <div className="pending-row-one"><span className="type-label">Vaccination</span><span className="date-label">{app.date}</span></div>
                     <p>pet name: {app.petName}</p>
                     <div className="pending-actions">
                       <button className="btn-accept-mini" onClick={() => handleStatusUpdate(app.id, 'confirmado')}>Accept</button>
@@ -259,10 +212,7 @@ const Home = () => {
                 <div key={chat.id} className="chat-row-item">
                   <img src={chat.petImg} alt="pet" />
                   <div className="chat-content-text">
-                    <div className="chat-header-info">
-                      <strong>{chat.petName}</strong>
-                      <span className="chat-time">28-12-2026</span>
-                    </div>
+                    <div className="chat-header-info"><strong>{chat.petName}</strong><span className="chat-time">28-12-2026</span></div>
                     <p>{chat.lastMessage}</p>
                   </div>
                 </div>
