@@ -109,10 +109,12 @@ const Home = () => {
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={() => { navigate('/home'); toggleMenu(); }}>Home</div>
-          {/* ALTERAÇÃO AQUI: ROTA PARA CALENDAR */}
           <div className="menu-item" onClick={() => { navigate('/calendar'); toggleMenu(); }}>Calendar</div>
           <div className="menu-item" onClick={() => { navigate('/chat'); toggleMenu(); }}>Chat</div>
-          <div className="menu-item">Clients</div>
+          
+          {/* ESTA LINHA FOI CORRIGIDA: */}
+          <div className="menu-item" onClick={() => { navigate('/clients'); toggleMenu(); }}>Clients</div>
+          
           <div className="menu-item">Analytics</div>
           <div className="menu-item">Settings</div>
           <div className="menu-item logout" onClick={() => auth.signOut()}>Logout</div>
@@ -121,7 +123,7 @@ const Home = () => {
       {isMenuOpen && <div className="menu-overlay" onClick={toggleMenu}></div>}
 
       <header className="petify-header">
-        <img src={PetifyLogo} alt="Petify" className="main-logo" />
+        <img src={PetifyLogo} alt="Petify" className="main-logo" onClick={() => navigate('/home')} style={{cursor:'pointer'}} />
         <div className="header-center">
           <div className="search-bar-extra-large">
             <input type="text" placeholder="Search..." className="input-white-bg" />
