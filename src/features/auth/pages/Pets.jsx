@@ -37,24 +37,29 @@ const Pets = () => {
   const openHistory = (pet, type) => {
     setSelectedPet(pet);
     setActiveModal(type);
-    
-    // Consultas vêm de 'appointments', Vacinas de 'vaccines'
-    const colName = type === 'consultas' ? 'appointments' : 'vaccines';
-    
-    // ATENÇÃO: Se der erro de índice, usa a query simples primeiro:
-    // const q = query(collection(db, colName), where("petId", "==", pet.id));
-    
-    const q = query(
-      collection(db, colName), 
-      where("petId", "==", pet.id),
-      orderBy("date", "desc")
-    );
+    setHistoryData([]); // Limpa dados anteriores enquanto carrega
+
+    let q;
+    if (type === 'consultas') {
+      // Coleção de raiz 'appointments'
+      q = query(
+        collection(db, 'appointments'),
+        where("petId", "==", pet.id),
+        orderBy("date", "desc")
+      );
+    } else {
+      // Subcoleção: pets/{petId}/vaccination_card
+      q = query(
+        collection(db, "pets", pet.id, "vaccination_card"),
+        orderBy("timestamp", "desc")
+      );
+    }
 
     const unsub = onSnapshot(q, (snapshot) => {
       setHistoryData(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => {
-      console.error("Erro no Firebase! Clica no link da consola para criar o índice:", err);
-      setHistoryData([]); 
+      console.error("Erro no Firebase:", err);
+      setHistoryData([]);
     });
 
     return unsub;
@@ -79,7 +84,7 @@ const Pets = () => {
               <tr>
                 <th>Pet</th>
                 <th>Espécie / Raça</th>
-                <th>Idade</th>
+                <th>Idade / Peso</th>
                 <th style={{ textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
@@ -92,8 +97,12 @@ const Pets = () => {
                     </div>
                     <span className="name-text">{pet.name}</span>
                   </td>
-                  <td className="email-text">{pet.specie || 'Pet'} - {pet.breed || 'N/A'}</td>
-                  <td className="phone-text">{pet.age} anos</td>
+                  <td className="email-text">
+                    {pet.species || pet.specie || 'Pet'} - {pet.breed || 'N/A'}
+                  </td>
+                  <td className="phone-text">
+                    {pet.age} anos • {pet.weight || '--'} kg
+                  </td>
                   <td className="actions-cell">
                     <div className="actions-group">
                       <button className="btn-action-history" onClick={() => openHistory(pet, 'consultas')}>Consultas</button>
@@ -120,19 +129,31 @@ const Pets = () => {
                   <thead>
                     <tr>
                       <th>Data</th>
-                      <th>{activeModal === 'consultas' ? 'Motivo' : 'Nome da Vacina'}</th>
-                      <th>{activeModal === 'consultas' ? 'Status' : 'Lote'}</th>
+                      <th>{activeModal === 'consultas' ? 'Motivo' : 'Vacina'}</th>
+                      <th>{activeModal === 'consultas' ? 'Status' : 'Detalhes'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {historyData.map(item => (
                       <tr key={item.id}>
-                        <td>{item.date}</td>
-                        <td>{item.reason || item.vaccineName || 'N/A'}</td>
+                        <td className="date-cell">
+                          {item.date || item.dateAdministered || '---'}
+                        </td>
                         <td>
-                           <span className={`status-tag ${item.status || 'concluido'}`}>
-                              {item.status || item.batch || 'Concluído'}
-                           </span>
+                          <div className="main-info">{item.reason || item.name || 'N/A'}</div>
+                          {item.vetName && <div className="sub-info">Vet: {item.vetName}</div>}
+                        </td>
+                        <td>
+                          {activeModal === 'consultas' ? (
+                            <span className={`status-tag ${item.status || 'concluido'}`}>
+                              {item.status || 'Concluído'}
+                            </span>
+                          ) : (
+                            <div className="vaccine-details">
+                              <span className="status-tag validade">Val: {item.validUntil}</span>
+                              <div className="sub-info">Lote: {item.batchNumber || 'N/A'}</div>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
