@@ -96,8 +96,21 @@ const Home = () => {
     return () => { unsubscribeAuth(); unsubscribeApp(); unsubscribeChats(); };
   }, [navigate]);
 
+  // FUNÇÃO ATUALIZADA: Agora inclui o vetId do utilizador logado
   const handleStatusUpdate = async (id, newStatus) => {
-    try { await updateDoc(doc(db, "appointments", id), { status: newStatus }); } catch (e) { console.error(e); }
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const docRef = doc(db, "appointments", id);
+      const updateData = { status: newStatus };
+
+      if (newStatus === 'confirmado') {
+        updateData.vetId = currentUser.uid;
+      }
+
+      await updateDoc(docRef, updateData);
+    } catch (e) { console.error(e); }
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -106,15 +119,13 @@ const Home = () => {
 
   return (
     <div className="petify-container">
+      {/* HAMBURGER MENU RESTAURADO */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={() => { navigate('/home'); toggleMenu(); }}>Home</div>
           <div className="menu-item" onClick={() => { navigate('/calendar'); toggleMenu(); }}>Calendar</div>
           <div className="menu-item" onClick={() => { navigate('/chat'); toggleMenu(); }}>Chat</div>
-          
-          {/* ESTA LINHA FOI CORRIGIDA: */}
           <div className="menu-item" onClick={() => { navigate('/clients'); toggleMenu(); }}>Clients</div>
-          
           <div className="menu-item">Analytics</div>
           <div className="menu-item">Settings</div>
           <div className="menu-item logout" onClick={() => auth.signOut()}>Logout</div>

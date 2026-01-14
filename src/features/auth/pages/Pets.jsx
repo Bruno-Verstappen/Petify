@@ -11,8 +11,7 @@ const Pets = () => {
   const [ownerName, setOwnerName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Estados do Modal
-  const [activeModal, setActiveModal] = useState(null); // 'consultas' ou 'vacinas'
+  const [activeModal, setActiveModal] = useState(null);
   const [selectedPet, setSelectedPet] = useState(null);
   const [historyData, setHistoryData] = useState([]);
 
@@ -24,6 +23,7 @@ const Pets = () => {
       } catch (e) { console.error("Erro ao buscar dono:", e); }
     };
 
+    // Query baseada no ownerId para listar os pets do cliente
     const q = query(collection(db, "pets"), where("ownerId", "==", clientId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setPets(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -37,18 +37,17 @@ const Pets = () => {
   const openHistory = (pet, type) => {
     setSelectedPet(pet);
     setActiveModal(type);
-    setHistoryData([]); // Limpa dados anteriores enquanto carrega
+    setHistoryData([]);
 
     let q;
     if (type === 'consultas') {
-      // Coleção de raiz 'appointments'
       q = query(
         collection(db, 'appointments'),
         where("petId", "==", pet.id),
         orderBy("date", "desc")
       );
     } else {
-      // Subcoleção: pets/{petId}/vaccination_card
+      // Aceder à subcoleção vaccination_card dentro do documento do pet
       q = query(
         collection(db, "pets", pet.id, "vaccination_card"),
         orderBy("timestamp", "desc")
@@ -58,7 +57,7 @@ const Pets = () => {
     const unsub = onSnapshot(q, (snapshot) => {
       setHistoryData(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => {
-      console.error("Erro no Firebase:", err);
+      console.error("Erro ao buscar histórico:", err);
       setHistoryData([]);
     });
 
@@ -70,14 +69,14 @@ const Pets = () => {
       <div className="clients-header">
         <div className="title-section">
           <h1>Pets de {ownerName || 'Cliente'}</h1>
-          <p className="subtitle">Gerencie o histórico clínico dos animais</p>
+          <p className="subtitle">Gestão de histórico e dados clínicos</p>
         </div>
-        <button className="btn-back" onClick={() => navigate('/clients')}>Voltar para Clientes</button>
+        <button className="btn-back" onClick={() => navigate('/clients')}>Voltar</button>
       </div>
 
       <div className="table-container">
         {loading ? (
-          <div className="status-msg">A carregar dados...</div>
+          <div className="status-msg">A carregar pets...</div>
         ) : (
           <table className="custom-table">
             <thead>
@@ -98,10 +97,11 @@ const Pets = () => {
                     <span className="name-text">{pet.name}</span>
                   </td>
                   <td className="email-text">
-                    {pet.species || pet.specie || 'Pet'} - {pet.breed || 'N/A'}
+                    {/* Campos mapeados conforme a imagem: especie e raca */}
+                    {pet.especie || 'N/A'} - {pet.raca || 'N/A'}
                   </td>
                   <td className="phone-text">
-                    {pet.age} anos • {pet.weight || '--'} kg
+                    {pet.age} • {pet.weight}kg
                   </td>
                   <td className="actions-cell">
                     <div className="actions-group">
@@ -120,7 +120,7 @@ const Pets = () => {
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Histórico de {activeModal} - {selectedPet?.name}</h3>
+              <h3>{activeModal === 'consultas' ? 'Consultas' : 'Vacinas'} - {selectedPet?.name}</h3>
               <button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button>
             </div>
             <div className="modal-body">
@@ -130,18 +130,16 @@ const Pets = () => {
                     <tr>
                       <th>Data</th>
                       <th>{activeModal === 'consultas' ? 'Motivo' : 'Vacina'}</th>
-                      <th>{activeModal === 'consultas' ? 'Status' : 'Detalhes'}</th>
+                      <th>{activeModal === 'consultas' ? 'Status' : 'Lote / Vet'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {historyData.map(item => (
                       <tr key={item.id}>
-                        <td className="date-cell">
-                          {item.date || item.dateAdministered || '---'}
-                        </td>
+                        <td>{item.date || item.dateAdministered}</td>
                         <td>
-                          <div className="main-info">{item.reason || item.name || 'N/A'}</div>
-                          {item.vetName && <div className="sub-info">Vet: {item.vetName}</div>}
+                          <strong>{item.reason || item.name}</strong>
+                          {item.imageUrl && <span className="img-indicator"> 📷</span>}
                         </td>
                         <td>
                           {activeModal === 'consultas' ? (
@@ -149,9 +147,9 @@ const Pets = () => {
                               {item.status || 'Concluído'}
                             </span>
                           ) : (
-                            <div className="vaccine-details">
-                              <span className="status-tag validade">Val: {item.validUntil}</span>
-                              <div className="sub-info">Lote: {item.batchNumber || 'N/A'}</div>
+                            <div className="vaccine-info">
+                              <span className="status-tag batch">{item.batchNumber || 'Sem Lote'}</span>
+                              <small>{item.vetName}</small>
                             </div>
                           )}
                         </td>
@@ -160,7 +158,7 @@ const Pets = () => {
                   </tbody>
                 </table>
               ) : (
-                <p className="no-data">Sem registos encontrados para este pet.</p>
+                <p className="no-data">Nenhum registo encontrado.</p>
               )}
             </div>
           </div>
