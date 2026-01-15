@@ -15,6 +15,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative; /* GARANTE QUE O MENU SE POSICIONE EM RELAÇÃO AO HEADER */
+    z-index: 1000;      /* GARANTE QUE O HEADER FIQUE ACIMA DOS PAINÉIS */
 }
 
 .logo-text { font-size: 24px; margin: 0; font-weight: bold; }
@@ -158,62 +160,66 @@
 .tag.red { background: #F44336; color: white; }
 
 /* --- ESTILOS DO MENU HAMBÚRGUER --- */
+/* --- ESTILOS DO MENU HAMBÚRGUER (HOME CENTRO) --- */
 
-.menu-container {
-    position: relative; /* Necessário para o menu aparecer "preso" ao ícone */
+.dashboard-container .menu-container {
+    position: relative; 
     display: flex;
     align-items: center;
     margin-left: 15px;
 }
 
-.hamburger-icon {
-    width: 35px; /* Tamanho do ícone */
+.dashboard-container .hamburger-icon {
+    width: 35px; 
     height: auto;
     cursor: pointer;
     transition: transform 0.2s;
-    /* Se a tua imagem for preta e quiseres branca, usa isto: */
-    /* filter: invert(1); */ 
+    z-index: 1001;
 }
 
-.hamburger-icon:hover {
-    transform: scale(1.1);
-}
-
-/* A Caixa do Menu */
-.dropdown-menu {
+/* Forçamos o fundo cinza escuro aqui */
+.dashboard-container .dropdown-menu {
     position: absolute;
-    top: 50px; /* Distância do topo */
-    right: 0;    /* Alinhado à direita */
-    background-color: #2a2a2a; /* Fundo escuro (quase preto) */
-    border: 1px solid #555;
+    top: 50px; 
+    right: 0;    
+    background-color: #2a2a2a !important; /* Cinza Chumbo */
+    border: 1px solid #444 !important;
     border-radius: 8px;
-    width: 150px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    z-index: 1000; /* Garante que fica por cima de tudo */
+    width: 160px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    z-index: 9999 !important; 
     overflow: hidden;
+    display: block !important;
+    padding: 0;
+    margin: 0;
 }
 
-/* Cada opção do menu */
-.menu-item {
-    padding: 12px 15px;
-    color: white;
-    border-bottom: 1px solid #555; /* A linha separadora */
+/* Forçamos o texto branco e alinhamento à esquerda/centro */
+.dashboard-container .menu-item {
+    padding: 12px 15px !important;
+    background-color: #2a2a2a !important;
+    color: #ffffff !important; 
+    border-bottom: 1px solid #3d3d3d !important; 
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    text-align: center; /* Texto centrado como no print */
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
 }
 
-.menu-item:last-child {
-    border-bottom: none; /* Remove a linha do último item */
+.dashboard-container .menu-item:last-child {
+    border-bottom: none !important; 
 }
 
-.menu-item:hover {
-    background-color: #444; /* Cor ao passar o rato */
+.dashboard-container .menu-item:hover {
+    background-color: #444444 !important; /* Destaque no hover */
 }
 
-.menu-item.logout {
-    font-weight: bold; /* Destaque para o Logout */
+/* Cor específica para o Logout para não haver dúvida */
+.dashboard-container .menu-item.logout {
+    font-weight: bold !important;
+    color: #ff6b6b !important; /* Um vermelho claro para ser lido no fundo escuro */
 }
-
-/* Se o menu não abrir, o problema costuma estar aqui */

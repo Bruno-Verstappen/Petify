@@ -200,7 +200,6 @@ const HomeCentro = () => {
           <section className="section-block">
             <div className="section-header">
                 <h3>Pets in Center</h3>
-                {/* BOTÃO ADD PET - CONFIRMA QUE ESTÁ ASSIM 👇 */}
                 <button className="btn-add-pet" onClick={() => navigate('/add-pet')}>+ Add Pet</button>
             </div>
             
