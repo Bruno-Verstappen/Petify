@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start; /* Alinha Welcome e Petify à ESQUERDA */
+  align-items: flex-start; /* Alinha Welcome e Petify à ESQUERDA /
   padding: 60px 8%;
   box-sizing: border-box;
 }
@@ -27,7 +27,7 @@
 }
 
 .login-content-center {
-  align-self: center; /* Garante que o FORMULÁRIO fica no meio */
+  align-self: center; / Garante que o FORMULÁRIO fica no meio /
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -62,7 +62,7 @@
 .login-input {
   width: 320px;
   padding: 16px;
-  padding-right: 60px; /* Espaço para a pata não tapar o texto */
+  padding-right: 60px; / Espaço para a pata não tapar o texto /
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background-color: rgba(0, 0, 0, 0.4) !important;
@@ -74,10 +74,10 @@
 .pata-icon-large {
   position: absolute;
   right: 12px;
-  width: 42px !important; /* Tamanho da pata corrigido */
+  width: 42px !important; / Tamanho da pata corrigido /
   height: auto;
   cursor: pointer;
-  filter: brightness(0) invert(1); /* Garante que a pata fique branca */
+  filter: brightness(0) invert(1); / Garante que a pata fique branca */
   z-index: 5;
 }
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../../../config/firebase'; // Importa a tua configuração
+import { auth, db } from '../../../config/firebase'; // <--- IMPORTANTE: Importar também a 'db'
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore'; // <--- NOVOS IMPORTS para ler a BD
 import "./Login.css";
 import pataImg from "../../../assets/images/pata_password.png";
 
@@ -17,15 +18,38 @@ const Login = () => {
     setError('');
 
     try {
-      // 1. Autenticação real com Firebase
-      await signInWithEmailAndPassword(auth, email, password);
-      
-      // 2. Se o login tiver sucesso, redireciona
-      navigate('/home');
+      // 1. Autenticação (Verifica se email/pass estão certos)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Buscar os dados do utilizador à Base de Dados (Firestore)
+      // Queremos saber se é "centro de adoção" ou "clinica"
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        
+        console.log("Dados do user:", userData); // Para debug
+
+        // 3. Lógica de Redirecionamento
+        if (userData.type === 'centro de adoção') {
+          // Se for Centro de Adoção, vai para a Dashboard nova
+          navigate('/home-centro'); 
+        } else {
+          // Se for Clínica Veterinária (ou Funcionário genérico), vai para a Home normal
+          navigate('/home');
+        }
+
+      } else {
+        // Caso raro: O login existe no Auth, mas não tem dados na coleção 'users'
+        setError("Erro: Perfil de utilizador não encontrado.");
+      }
+
     } catch (err) {
-      console.error("Erro no login:", err.code);
-      // Tratamento de erros básico
-      if (err.code === 'auth/invalid-credential') {
+      console.error("Erro no login:", err);
+      // Tratamento de erros
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Email ou password incorretos.');
       } else {
         setError('Ocorreu um erro ao entrar. Tenta novamente.');
@@ -43,7 +67,7 @@ const Login = () => {
         <form className="biz-registration-form" onSubmit={handleLogin}>
           <h1 style={{ color: 'white', textAlign: 'center', marginBottom: '20px' }}>Sign In</h1>
           
-          {error && <p style={{ color: '#ff4d4d', textAlign: 'center' }}>{error}</p>}
+          {error && <p style={{ color: '#ff4d4d', textAlign: 'center', background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '5px' }}>{error}</p>}
           
           <div className="biz-input-wrapper">
             <label>Email</label>
