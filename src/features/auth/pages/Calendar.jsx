@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./Calendar.css";
-import { db } from "../../../config/firebase";
+import { db, auth } from "../../../config/firebase"; // Certifique-react que o auth está exportado no seu config
 import { 
-  collection, onSnapshot, addDoc, deleteDoc, doc, getDoc 
+  collection, onSnapshot, addDoc, doc, getDoc, query, where 
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -11,9 +12,23 @@ const Calendar = () => {
   const [events, setEvents] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", description: "" });
+  const [currentVetId, setCurrentVetId] = useState(null);
+  const [newEvent, setNewEvent] = useState({ title: "", description: "", urgency: "baixa" });
 
-  // Cores de urgência (Lógica Android)
+  // 1. Monitorizar o estado de autenticação para obter o vetId
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentVetId(user.uid);
+      } else {
+        setCurrentVetId(null);
+        setAppointments([]); // Limpa se deslogar
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Cores de urgência
   const getUrgencyColor = (urgency) => {
     switch (urgency?.toLowerCase()) {
       case "alta": case "high": case "muito alta": return "#E53935";
@@ -23,15 +38,23 @@ const Calendar = () => {
     }
   };
 
+  // 2. Carregar dados filtrados por vetId
   useEffect(() => {
-    const unsubEvents = onSnapshot(collection(db, "events"), (snapshot) => {
-      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    if (!currentVetId) return;
 
-    const unsubAppts = onSnapshot(collection(db, "appointments"), async (snapshot) => {
+    // Filtra agendamentos apenas deste veterinário
+    const qAppts = query(
+      collection(db, "appointments"), 
+      where("vetId", "==", currentVetId)
+    );
+
+    const unsubAppts = onSnapshot(qAppts, async (snapshot) => {
       const apptsData = await Promise.all(snapshot.docs.map(async (apptDoc) => {
         const data = apptDoc.data();
+        
+        // Filtro de status (opcional, já que a query traz tudo do vet)
         if (!data.status?.toLowerCase().includes("confirmad")) return null;
+
         let petName = "Pet";
         if (data.petId) {
           const petRef = doc(db, "pets", data.petId);
@@ -43,8 +66,14 @@ const Calendar = () => {
       setAppointments(apptsData.filter(a => a !== null));
     });
 
-    return () => { unsubEvents(); unsubAppts(); };
-  }, []);
+    // Se os eventos também forem privados por vetId:
+    const qEvents = query(collection(db, "events"), where("vetId", "==", currentVetId));
+    const unsubEvents = onSnapshot(qEvents, (snapshot) => {
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => { unsubAppts(); unsubEvents(); };
+  }, [currentVetId]);
 
   const combinedEvents = useMemo(() => {
     const formattedAppts = appointments.map(appt => {
@@ -61,7 +90,7 @@ const Calendar = () => {
   }, [events, appointments]);
 
   const handleQuickDateChange = (e) => {
-    const date = new Date(e.target.value + "-02"); // Add day to avoid timezone shifts
+    const date = new Date(e.target.value + "-02");
     setCurrentMonth(date);
     setSelectedDate(date);
   };
@@ -85,13 +114,30 @@ const Calendar = () => {
           <span className="day-num">{d}</span>
           <div className="dots-row">
             {dayEvents.slice(0, 3).map((e, i) => (
-              <div key={i} className="dot" style={{ backgroundColor: e.isAppointment ? getUrgencyColor(e.urgency) : "#fff" }} />
+              <div key={i} className="dot" style={{ backgroundColor: e.isAppointment || e.urgency ? getUrgencyColor(e.urgency) : "#fff" }} />
             ))}
           </div>
         </div>
       );
     }
     return days;
+  };
+
+  // Função para adicionar novo evento manual
+  const handleAddEvent = async () => {
+    if (!newEvent.title || !currentVetId) return;
+    try {
+      await addDoc(collection(db, "events"), {
+        ...newEvent,
+        date: selectedDate.toISOString().split('T')[0],
+        vetId: currentVetId,
+        createdAt: new Date()
+      });
+      setShowModal(false);
+      setNewEvent({ title: "", description: "", urgency: "baixa" });
+    } catch (error) {
+      console.error("Erro ao salvar evento:", error);
+    }
   };
 
   return (
@@ -124,15 +170,45 @@ const Calendar = () => {
       <div className="calendar-sidebar">
         <h3>{selectedDate.toLocaleDateString('pt-PT')}</h3>
         <div className="sidebar-list">
-          {combinedEvents.filter(e => e.date === selectedDate.toISOString().split('T')[0]).map(event => (
-            <div key={event.id} className="mini-card" style={{ borderLeftColor: getUrgencyColor(event.urgency) }}>
-              <strong>{event.title}</strong>
-              {event.time && <span>🕒 {event.time}</span>}
-            </div>
-          ))}
+          {combinedEvents
+            .filter(e => e.date === selectedDate.toISOString().split('T')[0])
+            .map(event => (
+              <div key={event.id} className="mini-card" style={{ borderLeftColor: getUrgencyColor(event.urgency) }}>
+                <strong>{event.title}</strong>
+                {event.reason && <small>{event.reason}</small>}
+                {event.time && <span>🕒 {event.time}</span>}
+              </div>
+            ))}
+          {combinedEvents.filter(e => e.date === selectedDate.toISOString().split('T')[0]).length === 0 && (
+            <p style={{ color: "#666", fontSize: "0.9rem" }}>Sem compromissos.</p>
+          )}
         </div>
         <button className="fab" onClick={() => setShowModal(true)}>+</button>
       </div>
+
+      {/* Modal Simples de Adição */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Novo Lembrete</h3>
+            <input 
+              type="text" 
+              placeholder="Título" 
+              value={newEvent.title} 
+              onChange={(e) => setNewEvent({...newEvent, title: e.target.value})} 
+            />
+            <select value={newEvent.urgency} onChange={(e) => setNewEvent({...newEvent, urgency: e.target.value})}>
+              <option value="baixa">Baixa Urgência</option>
+              <option value="media">Média Urgência</option>
+              <option value="alta">Alta Urgência</option>
+            </select>
+            <div className="modal-actions">
+              <button onClick={() => setShowModal(false)}>Cancelar</button>
+              <button onClick={handleAddEvent}>Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

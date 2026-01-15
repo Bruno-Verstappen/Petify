@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase'; 
 import { 
   doc, getDoc, collection, query, where, 
-  updateDoc, onSnapshot, orderBy 
+  updateDoc, onSnapshot, orderBy, getDocs 
 } from 'firebase/firestore';
 import './Home.css';
 
@@ -96,11 +96,28 @@ const Home = () => {
     return () => { unsubscribeAuth(); unsubscribeApp(); unsubscribeChats(); };
   }, [navigate]);
 
-  // FUNÇÃO ATUALIZADA: Agora inclui o vetId do utilizador logado
-  const handleStatusUpdate = async (id, newStatus) => {
+  // FUNÇÃO CORRIGIDA: Verifica conflito de horário antes de aceitar
+  const handleStatusUpdate = async (id, newStatus, appointmentDate) => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
+
+      if (newStatus === 'confirmado') {
+        // 1. Verificar se este veterinário já tem algo marcado nesta data/hora exata
+        const qConflict = query(
+          collection(db, "appointments"),
+          where("vetId", "==", currentUser.uid),
+          where("date", "==", appointmentDate),
+          where("status", "==", "confirmado")
+        );
+
+        const conflictSnap = await getDocs(qConflict);
+
+        if (!conflictSnap.empty) {
+          alert("Erro: Você já possui uma consulta confirmada para este dia e horário.");
+          return;
+        }
+      }
 
       const docRef = doc(db, "appointments", id);
       const updateData = { status: newStatus };
@@ -110,7 +127,12 @@ const Home = () => {
       }
 
       await updateDoc(docRef, updateData);
-    } catch (e) { console.error(e); }
+      if(newStatus === 'confirmado') alert("Consulta confirmada com sucesso!");
+      
+    } catch (e) { 
+      console.error(e); 
+      alert("Erro ao atualizar status.");
+    }
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -119,7 +141,6 @@ const Home = () => {
 
   return (
     <div className="petify-container">
-      {/* HAMBURGER MENU RESTAURADO */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={() => { navigate('/home'); toggleMenu(); }}>Home</div>
@@ -209,8 +230,8 @@ const Home = () => {
                     <div className="pending-row-one"><span className="type-label">Vaccination</span><span className="date-label">{app.date}</span></div>
                     <p>pet name: {app.petName}</p>
                     <div className="pending-actions">
-                      <button className="btn-accept-mini" onClick={() => handleStatusUpdate(app.id, 'confirmado')}>Accept</button>
-                      <button className="btn-refuse-mini" onClick={() => handleStatusUpdate(app.id, 'recusado')}>Refuse</button>
+                      <button className="btn-accept-mini" onClick={() => handleStatusUpdate(app.id, 'confirmado', app.date)}>Accept</button>
+                      <button className="btn-refuse-mini" onClick={() => handleStatusUpdate(app.id, 'recusado', app.date)}>Refuse</button>
                     </div>
                   </div>
                 </div>
