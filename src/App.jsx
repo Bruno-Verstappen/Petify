@@ -13,6 +13,7 @@ import Clients from './features/auth/pages/Clients.jsx';
 import Pets from './features/auth/pages/Pets';
 import HomeCentro from './features/auth/pages/HomeCentro.jsx';
 import AddPet from './features/auth/pages/AddPet.jsx';
+import AdoptionDetail from './features/auth/pages/AdoptionDetail.jsx';
 function App() {
   return (
     <Routes>
@@ -35,6 +36,7 @@ function App() {
       <Route path="/clients" element={<Clients />} />
 <Route path="/clients/:clientId/pets" element={<Pets />} />
 <Route path="/home-centro" element={<HomeCentro />} />
+<Route path="/request/:id" element={<AdoptionDetail />} />
 
             <Route path="/add-pet" element={<AddPet />} />
       <Route path="*" element={<h2>404 Not Found</h2>} />

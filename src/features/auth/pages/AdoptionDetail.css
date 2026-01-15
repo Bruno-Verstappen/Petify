@@ -1,0 +1,134 @@
+/* Fundo igual à Home */
+.detail-container {
+    background: linear-gradient(135deg, #a67c52 0%, #4a3b2a 100%);
+    min-height: 100vh;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lite { font-weight: normal; font-size: 0.8em; opacity: 0.8; }
+.close-btn { background: none; border: 1px solid white; color: white; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
+
+.detail-content {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.page-title {
+    align-self: flex-start;
+    margin-left: 10%; /* Ajuste visual */
+    margin-bottom: 10px;
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+/* O CARTÃO PRINCIPAL */
+.request-card-large {
+    background-color: #2a2a2a; /* Fundo cinzento escuro */
+    width: 80%;
+    max-width: 900px;
+    border-radius: 15px;
+    padding: 30px;
+    display: flex;
+    gap: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    border: 1px solid #444;
+}
+
+/* Coluna Esquerda */
+.card-left-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-pet-img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #555;
+}
+
+.info-block p {
+    margin: 5px 0;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.info-block strong {
+    color: #ddd;
+    font-weight: 600;
+}
+
+/* Coluna Direita */
+.card-right-col {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.status-title {
+    font-size: 24px;
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 15px;
+}
+
+/* Cores do Status */
+.status-title span.accepted { color: #4CAF50; } /* Verde */
+.status-title span.rejected { color: #F44336; } /* Vermelho */
+.status-title span.pending { color: #FFC107; }  /* Amarelo */
+
+.motivation-box {
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #ccc;
+    background: rgba(0,0,0,0.2);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Footer (Data e Icone) */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    margin-top: auto; /* Empurra para o fundo */
+}
+
+.edit-icon {
+    font-size: 24px;
+    cursor: pointer;
+    border: 1px solid white;
+    padding: 5px;
+    border-radius: 5px;
+    transition: 0.2s;
+}
+
+.edit-icon:hover { background: white; color: black; }
+
+/* Responsivo para telemóvel */
+@media (max-width: 768px) {
+    .request-card-large { flex-direction: column; width: 95%; }
+}

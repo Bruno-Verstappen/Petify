@@ -142,14 +142,20 @@ const HomeCentro = () => {
 
       <div className="dash-content">
         
-        {/* COLUNA ESQUERDA */}
+        {/* COLUNA ESQUERDA - HISTÓRICO (COM NAVEGAÇÃO) */}
         <aside className="left-panel">
           <h3>Adoption Requests</h3>
           <div className="filter-box"><input placeholder="Filter..." /></div>
           
           <div className="vertical-scroll-list">
             {historyRequests.map(req => (
-              <div key={req.id} className="request-card-small">
+              <div 
+                key={req.id} 
+                className="request-card-small"
+                // 👇 AQUI ESTÁ A ALTERAÇÃO: Ao clicar, vai para a página de detalhes
+                onClick={() => navigate(`/request/${req.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="card-header-row">
                   <img src={req.petImageUrl || "https://placehold.co/50"} alt="pet" className="avatar-small" />
                   <div className={`status-dot ${req.status === 'accepted' ? 'green' : 'red'}`}></div>
@@ -174,7 +180,7 @@ const HomeCentro = () => {
             <div className="kpi-card warning"><h2>{stats.urgent}</h2><p>Urgent Care</p></div>
           </div>
 
-          {/* PENDING REQUESTS */}
+          {/* PENDING REQUESTS - SEM NAVEGAÇÃO (MANTIDO IGUAL) */}
           <section className="section-block">
             <h3>Pending Requests</h3>
             <div className="horizontal-scroll-list">
