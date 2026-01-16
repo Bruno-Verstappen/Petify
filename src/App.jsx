@@ -14,6 +14,7 @@ import Pets from './features/auth/pages/Pets';
 import HomeCentro from './features/auth/pages/HomeCentro.jsx';
 import AddPet from './features/auth/pages/AddPet.jsx';
 import AdoptionDetail from './features/auth/pages/AdoptionDetail.jsx';
+import AddVaccine from './features/auth/pages/AddVaccine.jsx';
 function App() {
   return (
     <Routes>
@@ -39,6 +40,7 @@ function App() {
 <Route path="/request/:id" element={<AdoptionDetail />} />
 
             <Route path="/add-pet" element={<AddPet />} />
+      <Route path="/clients/:clientId/pets/:petId/add-vaccine" element={<AddVaccine />} />
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>
   );

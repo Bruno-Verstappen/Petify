@@ -1,0 +1,123 @@
+.add-vaccine-page {
+    background-color: #121212;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+.add-vaccine-container {
+    width: 100%;
+    max-width: 550px;
+    display: flex;
+    flex-direction: column;
+}
+
+.add-vaccine-title {
+    color: #c5935f;
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0;
+    text-align: left;
+}
+
+.add-vaccine-subtitle {
+    color: #888;
+    font-size: 14px;
+    margin-top: 8px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.vaccine-form-card {
+    background: #1e1e1e;
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid #2a2a2a;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    color: #c5935f;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.input-group input {
+    width: 100%;
+    background: #121212;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: #c5935f;
+    background: #181818;
+}
+
+.date-inputs-row {
+    display: flex;
+    gap: 20px;
+}
+
+.date-inputs-row > div {
+    flex: 1;
+}
+
+.btn-submit-vaccine {
+    width: 100%;
+    background: #c5935f;
+    color: #000;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-submit-vaccine:hover {
+    background: #fff;
+    transform: translateY(-3px);
+}
+
+.btn-submit-vaccine:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.btn-cancel-link {
+    background: transparent;
+    border: none;
+    color: #666;
+    margin-top: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.3s;
+    text-decoration: underline;
+}
+
+.btn-cancel-link:hover {
+    color: #c5935f;
+}

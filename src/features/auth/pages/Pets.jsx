@@ -23,7 +23,6 @@ const Pets = () => {
       } catch (e) { console.error("Erro ao buscar dono:", e); }
     };
 
-    // Query baseada no ownerId para listar os pets do cliente
     const q = query(collection(db, "pets"), where("ownerId", "==", clientId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setPets(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -47,7 +46,6 @@ const Pets = () => {
         orderBy("date", "desc")
       );
     } else {
-      // Aceder à subcoleção vaccination_card dentro do documento do pet
       q = query(
         collection(db, "pets", pet.id, "vaccination_card"),
         orderBy("timestamp", "desc")
@@ -97,8 +95,7 @@ const Pets = () => {
                     <span className="name-text">{pet.name}</span>
                   </td>
                   <td className="email-text">
-                    {/* Campos mapeados conforme a imagem: especie e raca */}
-                    {pet.especie || 'N/A'} - {pet.raca || 'N/A'}
+                    {pet.especie || pet.species || 'N/A'} - {pet.raca || pet.breed || 'N/A'}
                   </td>
                   <td className="phone-text">
                     {pet.age} • {pet.weight}kg
@@ -123,7 +120,31 @@ const Pets = () => {
               <h3>{activeModal === 'consultas' ? 'Consultas' : 'Vacinas'} - {selectedPet?.name}</h3>
               <button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button>
             </div>
+            
             <div className="modal-body">
+              {/* NOVO CABEÇALHO DO HISTÓRICO COM BOTÃO DE ADICIONAR */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '20px',
+                padding: '0 10px' 
+              }}>
+                <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>
+                   HISTÓRICO RECENTE
+                </span>
+                
+                {activeModal === 'vacinas' && (
+                  <button 
+                    className="btn-action-vaccine" 
+                    style={{ background: '#715639', color: 'white', border: 'none' }}
+                    onClick={() => navigate(`/clients/${clientId}/pets/${selectedPet.id}/add-vaccine`)}
+                  >
+                    + NOVA VACINA
+                  </button>
+                )}
+              </div>
+
               {historyData.length > 0 ? (
                 <table className="history-table">
                   <thead>
