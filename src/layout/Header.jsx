@@ -74,12 +74,6 @@ const Header = () => {
           <div className="menu-item" onClick={() => { navigate("/clients"); toggleMenu(); }}>
             Clients
           </div>
-          <div className="menu-item" onClick={() => toggleMenu()}>
-            Analytics
-          </div>
-          <div className="menu-item" onClick={() => toggleMenu()}>
-            Settings
-          </div>
           <div className="menu-item logout" onClick={handleLogout}>
             Logout
           </div>

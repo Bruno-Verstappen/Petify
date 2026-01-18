@@ -138,8 +138,6 @@ const Home = () => {
           <div className="menu-item" onClick={() => {navigate('/calendar'); toggleMenu();}}>Calendar</div>
           <div className="menu-item" onClick={() => {navigate('/chat'); toggleMenu();}}>Chat</div>
           <div className="menu-item" onClick={() => {navigate('/clients'); toggleMenu();}}>Clients</div>
-          <div className="menu-item" onClick={() => toggleMenu()}>Analytics</div>
-          <div className="menu-item" onClick={() => toggleMenu()}>Settings</div>
           <div className="menu-item logout" onClick={() => auth.signOut()}>Logout</div>
         </div>
       </div>
