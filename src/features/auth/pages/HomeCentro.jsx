@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase';
-import { collection, getDocs, updateDoc, doc, getDoc, addDoc } from 'firebase/firestore';
+import { 
+  collection, getDocs, updateDoc, doc, getDoc, addDoc, serverTimestamp 
+} from 'firebase/firestore';
 import './HomeCentro.css';
 
 import menuIcon from '../../../assets/images/Hamburger_menu.png';
@@ -11,7 +13,7 @@ const HomeCentro = () => {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [stats, setStats] = useState({ totalPets: 0, adoptions: 0, pending: 0, urgent: 0 });
+  const [stats, setStats] = useState({ totalPets: 0, adoptions: 0, pending: 0, last30Days: 0, avgTime: 0 });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [interviewRequests, setInterviewRequests] = useState([]);
   const [historyRequests, setHistoryRequests] = useState([]);
@@ -49,9 +51,9 @@ const HomeCentro = () => {
 
       petsSnapshot.forEach(doc => {
         const data = doc.data();
-        const petCenterId = data.adoptionCenterId || data.vcId;
+        const petCenterId = data.clinicId || data.adoptionCenterId || data.vcId;
 
-        if (petCenterId === targetCenterId && (!data.ownerId || data.ownerId === "") && data.status !== 'adopted') {
+        if (petCenterId === targetCenterId && data.status !== 'adopted') {
           total++;
           if (data.status === 'sick' || data.status === 'medical') sickCount++;
           availablePets.push({ id: doc.id, ...data });
@@ -65,6 +67,12 @@ const HomeCentro = () => {
       let interviews = [];
       let history = [];
       let acceptedCount = 0;
+      
+      let adoptions30Days = 0;
+      let totalAdoptionDays = 0;
+      const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
 
       reqSnapshot.forEach(doc => {
         const data = doc.data();
@@ -78,21 +86,38 @@ const HomeCentro = () => {
 
         if (finalStatus === 'accepted' || finalStatus === 'rejected' || finalStatus === 'approved') {
           history.push(item);
-          if (finalStatus === 'accepted' || finalStatus === 'approved') acceptedCount++;
+          
+          if (finalStatus === 'accepted' || finalStatus === 'approved') {
+            acceptedCount++;
+
+            const adoptionDate = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+            if (adoptionDate && adoptionDate >= thirtyDaysAgo) {
+              adoptions30Days++;
+            }
+
+            if (adoptionDate) {
+              const diffTime = Math.abs(now - adoptionDate);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              totalAdoptionDays += diffDays;
+            }
+          }
         } else {
           if (reqStatus === 'pendente' || reqStatus === 'pending') {
             pending.push(item);
-          } else if (reqStatus === 'interview' || reqStatus === 'entrevista') {
+          } else if (reqStatus === 'interview' || reqStatus === 'entrevista' || reqStatus === 'interview_scheduled') {
             interviews.push(item);
           }
         }
       });
 
+      const averageTime = acceptedCount > 0 ? Math.round(totalAdoptionDays / acceptedCount) : 0;
+
       setStats({
         totalPets: total,
         adoptions: acceptedCount,
         pending: pending.length + interviews.length,
-        urgent: sickCount
+        last30Days: adoptions30Days,
+        avgTime: averageTime
       });
 
       setPendingRequests(pending);
@@ -112,37 +137,38 @@ const HomeCentro = () => {
   const sendNotification = async (userId, title, body) => {
     if (!userId) return;
     try {
-      await addDoc(collection(db, "notifications"), {
-        userId: userId,
+      await addDoc(collection(db, "users", userId, "notifications"), {
         title: title,
         body: body,
         read: false,
-        timestamp: new Date()
+        type: "adoption_update",
+        date: serverTimestamp()
       });
-      console.log("Notificação enviada para:", userId);
     } catch (error) {
       console.error("Erro ao criar notificação:", error);
     }
   };
 
-
   const handleScheduleInterview = async (reqId) => {
-    const date = interviewDates[reqId];
-    if (!date) { alert("Selecione uma data."); return; }
+    const rawDate = interviewDates[reqId];
+    if (!rawDate) { alert("Selecione uma data e hora."); return; }
 
     try {
+      const formattedDate = rawDate.replace('T', ' ');
       const requestItem = pendingRequests.find(r => r.id === reqId);
 
       await updateDoc(doc(db, "adoption_requests", reqId), {
         requestStatus: 'interview',
-        interviewDate: date
+        interviewDate: formattedDate,
+        status: 'interview_scheduled'
       });
 
-      if (requestItem && requestItem.userId) {
+      const targetUserId = requestItem?.userId || requestItem?.formData?.userId;
+      if (targetUserId) {
         await sendNotification(
-          requestItem.userId,
-          "Entrevista Marcada! 📅",
-          `O centro agendou uma entrevista consigo para o dia ${date}.`
+          targetUserId,
+          "Entrevista Agendada! 📅",
+          `O centro agendou uma entrevista consigo para: ${formattedDate}.`
         );
       }
 
@@ -152,26 +178,35 @@ const HomeCentro = () => {
   };
 
   const handleFinalDecision = async (req, decision) => {
-    if (!window.confirm(decision === 'accepted' ? "Aceitar?" : "Recusar?")) return;
+    if (!window.confirm(decision === 'accepted' ? "Aceitar esta adoção?" : "Recusar este pedido?")) return;
 
     try {
-      await updateDoc(doc(db, "adoption_requests", req.id), { status: decision, requestStatus: 'concluido' });
+      await updateDoc(doc(db, "adoption_requests", req.id), { 
+        status: decision, 
+        requestStatus: 'concluido' 
+      });
 
       if (decision === 'accepted' && req.petId) {
-        const newOwnerId = req.userId || req.formData?.uid || "adopted_unknown";
-        await updateDoc(doc(db, "pets", req.petId), { status: 'adopted', ownerId: newOwnerId, active: "false" });
+        const newOwnerId = req.userId || req.formData?.uid || req.formData?.userId || "adopted_unknown";
+        await updateDoc(doc(db, "pets", req.petId), { 
+          status: 'adopted', 
+          ownerId: newOwnerId, 
+          active: "false",
+          adoptionDate: serverTimestamp()
+        });
       }
 
       const notifTitle = decision === 'accepted' ? "Parabéns! Adoção Aceite 🎉" : "Atualização do Pedido";
       const notifBody = decision === 'accepted'
-        ? `O seu pedido de adoção para ${req.petName} foi aceite! O centro entrará em contacto.`
-        : `Infelizmente, o seu pedido de adoção para ${req.petName} não foi aceite neste momento.`;
+        ? `O seu pedido de adoção para ${req.petName} foi aceite! O centro entrará em contacto para a entrega.`
+        : `O seu pedido de adoção para ${req.petName} não foi aceite neste momento.`;
 
-      if (req.userId) {
-        await sendNotification(req.userId, notifTitle, notifBody);
+      const targetUserId = req.userId || req.formData?.userId;
+      if (targetUserId) {
+        await sendNotification(targetUserId, notifTitle, notifBody);
       }
 
-      alert("Sucesso! Utilizador notificado.");
+      alert("Decisão registada com sucesso!");
       fetchData();
     } catch (error) { console.error(error); }
   };
@@ -180,9 +215,9 @@ const HomeCentro = () => {
 
   const isInterviewPassed = (dateString) => {
     if (!dateString) return false;
-    const interviewDate = new Date(dateString);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    return today > interviewDate;
+    const interviewDate = new Date(dateString.replace(' ', 'T'));
+    const now = new Date();
+    return now >= interviewDate; 
   };
 
   const handleLogout = () => { auth.signOut(); navigate('/login'); };
@@ -207,9 +242,9 @@ const HomeCentro = () => {
             {menuOpen && (
               <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
                 <div className="menu-item" onClick={() => handleNavigate('/home-centro')}>Home</div>
-                <div className="menu-item" onClick={() => handleNavigate('/pet-list')}>Pets</div>
-                <div className="menu-item" onClick={() => handleNavigate('/settings')}>Settings</div>
-                <div className="menu-item logout" onClick={handleLogout}>Logout</div>
+                <div className="menu-item" onClick={() => handleNavigate('/add-pet')}>Gerir Animais</div>
+                <div className="menu-item" onClick={() => handleNavigate('/settings')}>Definições</div>
+                <div className="menu-item logout" onClick={handleLogout}>Sair</div>
               </div>
             )}
           </div>
@@ -218,7 +253,7 @@ const HomeCentro = () => {
 
       <div className="dash-content">
         <aside className="left-panel">
-          <h3>Adoption Requests</h3>
+          <h3>Histórico Recente</h3>
           <div className="vertical-scroll-list">
             {historyRequests.map(req => (
               <div key={req.id} className="request-card-small">
@@ -227,7 +262,7 @@ const HomeCentro = () => {
                   <div className={`status-dot ${req.status === 'accepted' ? 'green' : 'red'}`}></div>
                 </div>
                 <p><strong>Pet:</strong> {req.petName}</p>
-                <p><strong>User:</strong> {req.formData?.fullName}</p>
+                <p><strong>User:</strong> {req.formData?.fullName || "Anónimo"}</p>
                 <p className="date-text">Status: {req.status}</p>
               </div>
             ))}
@@ -239,24 +274,29 @@ const HomeCentro = () => {
           <div className="kpi-grid">
             <div className="kpi-card"><h2>{stats.totalPets}</h2><p>Total Pets</p></div>
             <div className="kpi-card"><h2>{stats.adoptions}</h2><p>Adoptions</p></div>
-            <div className="kpi-card"><h2>{stats.pending}</h2><p>Process</p></div>
-            <div className="kpi-card warning"><h2>{stats.urgent}</h2><p>Urgent Care</p></div>
+            <div className="kpi-card"><h2>{stats.last30Days}</h2><p>Últimos 30 Dias</p></div>
+            <div className="kpi-card"><h2>{stats.avgTime}d</h2><p>Tempo Médio</p></div>
           </div>
 
           <section className="section-block">
-            <h3>Pending Requests</h3>
+            <h3>Novos Pedidos (Agendar Entrevista)</h3>
             <div className="horizontal-scroll-list">
               {pendingRequests.map(req => (
                 <div key={req.id} className="pending-card">
                   <img src={req.petImageUrl || "https://placehold.co/80"} alt="pet" className="pet-img-medium" />
                   <div className="pending-info">
                     <h4>{req.petName}</h4>
-                    <p className="candidate-name">User: {req.formData?.fullName}</p>
-                    <p className="motivation-text">Status: {req.requestStatus}</p>
+                    <p className="candidate-name">Candidato: {req.formData?.fullName}</p>
+                    <p className="motivation-text">Email: {req.formData?.email}</p>
+                    
                     <div className="interview-scheduler">
-                      <label>Marcar Entrevista:</label>
+                      <label style={{fontSize:'12px', fontWeight:'bold'}}>Data e Hora:</label>
                       <div className="date-action-row">
-                        <input type="date" className="date-input" onChange={(e) => onDateChange(req.id, e.target.value)} />
+                        <input 
+                          type="datetime-local" 
+                          className="date-input" 
+                          onChange={(e) => onDateChange(req.id, e.target.value)} 
+                        />
                         <button className="btn-schedule" onClick={() => handleScheduleInterview(req.id)}>Marcar</button>
                       </div>
                     </div>
@@ -268,26 +308,28 @@ const HomeCentro = () => {
           </section>
 
           <section className="section-block">
-            <h3>Scheduled Interviews</h3>
+            <h3>Entrevistas Agendadas</h3>
             <div className="horizontal-scroll-list">
               {interviewRequests.map(req => {
-                const canDecide = isInterviewPassed(req.interviewDate);
+                const datePassed = isInterviewPassed(req.interviewDate);
+                
                 return (
                   <div key={req.id} className="pending-card interview-card-border">
                     <img src={req.petImageUrl || "https://placehold.co/80"} alt="pet" className="pet-img-medium" />
                     <div className="pending-info">
                       <h4>{req.petName}</h4>
                       <p className="candidate-name">User: {req.formData?.fullName}</p>
-                      {!canDecide ? (
+                      
+                      {!datePassed ? (
                         <div className="interview-status">
                           <p className="status-label scheduled">Agendada</p>
                           <p className="interview-date-display">📅 {req.interviewDate}</p>
-                          <p className="wait-text">A aguardar data...</p>
+                          <p className="wait-text" style={{fontSize:'11px', color:'#aaa'}}>A aguardar a data...</p>
                         </div>
                       ) : (
                         <div className="final-decision-box">
                           <p className="status-label action">Decisão Necessária</p>
-                          <p className="info-text">Data ({req.interviewDate}) passou.</p>
+                          <p className="info-text">Data ({req.interviewDate}) atingida.</p>
                           <div className="action-buttons">
                             <button className="btn-accept" onClick={() => handleFinalDecision(req, 'accepted')}>Aceitar</button>
                             <button className="btn-refuse" onClick={() => handleFinalDecision(req, 'rejected')}>Recusar</button>
@@ -304,23 +346,29 @@ const HomeCentro = () => {
 
           <section className="section-block">
             <div className="section-header">
-              <h3>Pets in Center</h3>
-              <button className="btn-add-pet" onClick={() => navigate('/add-pet')}>+ Add Pet</button>
+              <h3>Animais no Centro</h3>
+              <button className="btn-add-pet" onClick={() => navigate('/add-pet')}>+ Adicionar</button>
             </div>
             <div className="pets-list-container">
               {petsInCenter.map(pet => (
                 <div key={pet.id} className="pet-row">
                   <img
-                    src={pet.imageUrl || (pet.images && pet.images.length > 0 ? pet.images[0] : "https://placehold.co/40")}
+                    src={
+                      (pet.images && pet.images.length > 0 ? pet.images[0] : null) || 
+                      pet.imageUrl || 
+                      "https://placehold.co/40"
+                    }
                     alt="pet"
                     className="avatar-tiny"
                   />
                   <div className="pet-details">
                     <span className="pet-name">{pet.name} ({pet.species})</span>
-                    <span className="pet-sub">Age: {pet.age} | Chip: {pet.microchip || "N/A"}</span>
+                    <span className="pet-sub">Idade: {pet.age} | Chip: {pet.microchip || "N/A"}</span>
                   </div>
                   <div className="pet-status">
-                    {pet.status === 'sick' ? <span className="tag red">Medical</span> : <span className="tag green">Available</span>}
+                    {pet.status === 'sick' || pet.status === 'medical' 
+                      ? <span className="tag red">Doente</span> 
+                      : <span className="tag green">Disponível</span>}
                   </div>
                 </div>
               ))}
