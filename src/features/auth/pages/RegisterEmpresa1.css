@@ -11,7 +11,6 @@
   overflow-x: hidden;
 }
 
-/* Link Superior */
 .biz-top-link {
   position: absolute;
   top: 25px; right: 5%;
@@ -21,7 +20,6 @@
   z-index: 10;
 }
 
-/* Header - Números 1 e 2 */
 .biz-step-header {
   display: flex;
   align-items: center;
@@ -45,7 +43,6 @@
   margin-top: 15px;
 }
 
-/* Formulário Central */
 .biz-main-content {
   flex: 1;
   display: flex;
@@ -86,7 +83,6 @@
   outline: none;
 }
 
-/* Sistema da Pata */
 .biz-pata-container {
   position: relative;
   width: 100%;
@@ -99,10 +95,9 @@
   right: 10px;
   width: 30px;
   cursor: pointer;
-  filter: brightness(0); /* Pata preta sobre o fundo branco */
+  filter: brightness(0);
 }
 
-/* Rodapé Responsivo - O segredo para não haver overlap */
 .biz-footer-responsive {
   display: flex;
   justify-content: space-between;
@@ -122,11 +117,11 @@
 
 .biz-footer-logo {
   color: white;
-  font-size: clamp(2.5rem, 8vw, 5rem); /* Ajusta o tamanho conforme o ecrã */
+  font-size: clamp(2.5rem, 8vw, 5rem);
   font-weight: bold;
   margin: 0;
   text-align: center;
-  flex: 2; /* Dá mais espaço ao centro */
+  flex: 2;
 }
 
 .biz-btn-continue {
@@ -141,7 +136,6 @@
   white-space: nowrap;
 }
 
-/* Ajuste Mobile */
 @media (max-width: 480px) {
   .biz-footer-responsive {
     flex-direction: column;

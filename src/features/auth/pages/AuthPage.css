@@ -8,20 +8,20 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start; /* Encosta os títulos à esquerda */
+  align-items: flex-start;
   padding: 60px 8%;
   box-sizing: border-box;
 }
 
 .auth-welcome-text, .auth-petify-logo {
   color: white !important;
-  font-size: 4rem; /* Tamanho ajustado conforme as imagens anteriores */
+  font-size: 4rem;
   font-weight: bold;
   margin: 0;
 }
 
 .auth-content-center {
-  align-self: center; /* Mantém apenas o bloco de botões no centro */
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;

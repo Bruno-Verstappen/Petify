@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase';
 import { collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
 import './PetList.css';
-
-// CAMINHO DA IMAGEM
 import menuIcon from '../../../assets/images/Hamburger_menu.png';
 
 const PetList = () => {
@@ -12,7 +10,6 @@ const PetList = () => {
   const [loading, setLoading] = useState(true);
   const [pets, setPets] = useState([]);
 
-  // ESTADOS
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
 
@@ -24,7 +21,6 @@ const PetList = () => {
     try {
       setLoading(true);
       const petsRef = collection(db, "pets");
-      // Filtra pets sem dono
       const q = query(petsRef, where("ownerId", "==", ""));
       const snapshot = await getDocs(q);
       const petsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -43,14 +39,12 @@ const PetList = () => {
     if (path) navigate(path);
   };
 
-  // --- FUNÇÃO DO MENU ---
   const toggleMenu = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setMenuOpen(prev => !prev);
   };
 
-  // --- LÓGICA DO POPUP ---
   const handlePetClick = (pet) => {
     if (!menuOpen) setSelectedPet(pet);
   };
@@ -73,17 +67,14 @@ const PetList = () => {
   };
 
   return (
-    // Ao clicar em qualquer parte do fundo, fecha o menu
     <div className="pets-list-container" onClick={() => setMenuOpen(false)}>
 
-      {/* HEADER */}
       <header className="dash-header" style={{ zIndex: 1000, overflow: 'visible', position: 'relative' }}>
         <h1 className="logo-text">Petify <span className="sub-logo">Center Admin</span></h1>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <input type="text" placeholder="Search..." className="search-bar" />
 
-          {/* --- MENU HAMBÚRGUER (ÁREA DE CLIQUE) --- */}
           <div
             onClick={toggleMenu}
             style={{
@@ -102,7 +93,6 @@ const PetList = () => {
               style={{ width: '35px', height: 'auto', filter: 'invert(1)', display: 'block' }}
             />
 
-            {/* --- O MENU DROPDOWN --- */}
             {menuOpen && (
               <div
                 onClick={(e) => e.stopPropagation()}
@@ -140,7 +130,6 @@ const PetList = () => {
                   Pets
                 </div>
 
-                {/* 👇 AQUI ESTAVA O ERRO. AGORA ESTÁ CORRIGIDO: */}
                 <div
                   onClick={() => handleNavigate('/settings')}
                   style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center', cursor: 'pointer' }}
@@ -164,7 +153,6 @@ const PetList = () => {
         </div>
       </header>
 
-      {/* CONTEÚDO */}
       <div className="pets-content-area" style={{ position: 'relative', zIndex: 1 }}>
         <h2 className="page-title">Pets in Center</h2>
 
@@ -200,7 +188,6 @@ const PetList = () => {
         <div className="big-empty-space"></div>
       </div>
 
-      {/* POPUP */}
       {selectedPet && (
         <div className="modal-overlay" onClick={closePopup}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

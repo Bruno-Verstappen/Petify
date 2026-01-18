@@ -81,7 +81,6 @@ const Pets = () => {
           {loading ? (
             <div className="status-msg">A carregar pets...</div>
           ) : (
-            /* WRAPPER PARA SCROLL LATERAL ADICIONADO AQUI */
             <div className="table-responsive-container">
               <table className="pets-main-table">
                 <thead>

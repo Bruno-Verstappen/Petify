@@ -5,7 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import './AdoptionDetail.css';
 
 const AdoptionDetail = () => {
-  const { id } = useParams(); // Pega o ID do URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,10 +35,8 @@ const AdoptionDetail = () => {
   if (loading) return <div className="loading-screen">A carregar...</div>;
   if (!request) return null;
 
-  // Formatar data para o footer (ex: 15-12-2025 15:30)
   const formatDate = (timestamp) => {
     if (!timestamp) return "Data desconhecida";
-    // Se for timestamp do Firebase
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleString('pt-PT', { 
         day: '2-digit', month: '2-digit', year: 'numeric', 
@@ -48,7 +46,6 @@ const AdoptionDetail = () => {
 
   return (
     <div className="detail-container">
-      {/* Header Simples com botão de voltar */}
       <header className="detail-header">
         <h1>Petify <span className="lite">Center Admin</span></h1>
         <button onClick={() => navigate('/home-centro')} className="close-btn">X</button>
@@ -59,7 +56,6 @@ const AdoptionDetail = () => {
 
         <div className="request-card-large">
           
-          {/* Coluna da Esquerda: Imagem + Dados Técnicos */}
           <div className="card-left-col">
             <img 
               src={request.petImageUrl || "https://placehold.co/150"} 
@@ -78,7 +74,6 @@ const AdoptionDetail = () => {
             </div>
           </div>
 
-          {/* Coluna da Direita: Status + Motivação */}
           <div className="card-right-col">
             <h2 className="status-title">
               Request: <span className={request.status}>{request.status}</span>
@@ -90,7 +85,6 @@ const AdoptionDetail = () => {
 
             <div className="card-footer">
                <span>{formatDate(request.createdAt || request.timestamp)}</span>
-               {/* Ícone de Editar (Visual) */}
                <div className="edit-icon">✏️</div>
             </div>
           </div>

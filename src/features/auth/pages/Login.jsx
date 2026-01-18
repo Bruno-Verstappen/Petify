@@ -4,7 +4,7 @@ import { auth, db } from '../../../config/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore'; 
 import "./Login.css";
-import pataImg from "../../../assets/images/pata_password.png"; // Confirma se o caminho está certo
+import pataImg from "../../../assets/images/pata_password.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,25 +18,19 @@ const Login = () => {
     setError('');
 
     try {
-      // 1. Autenticação
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Buscar os dados do utilizador
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         
-        // Normalizar dados
         let role = (userData.role || '').toLowerCase();
         let type = (userData.type || '').toLowerCase();
         const clinicId = userData.clinicId;
 
-        // --- NOVA LÓGICA INTELIGENTE ---
-        // Se o user (Manel) não tiver 'type' definido, mas tiver um chefe (clinicId),
-        // vamos espreitar o perfil da empresa para saber se é um Centro de Adoção.
         if (!type && clinicId) {
             try {
                 const clinicDocRef = doc(db, "users", clinicId);
@@ -56,16 +50,13 @@ const Login = () => {
 
         console.log("Login -> Role:", role, "| Type:", type);
 
-        // 3. Redirecionamento Correto
         if (type === 'centro de adoção' || type === 'centro de adocao') {
-          // Se for Centro (seja Admin ou Funcionário herdado), vai para aqui:
           navigate('/home-centro'); 
         } 
         else if (role === 'admin_empresa') {
           navigate('/home-clinica');
         }
         else if (role === 'vet' || role === 'funcionario' || role === 'rececionista') {
-          // Se for clínica normal
           navigate('/home-clinica');
         }
         else if (role === 'admin') {

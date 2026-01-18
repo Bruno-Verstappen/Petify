@@ -14,10 +14,9 @@ const AddVaccine = () => {
         dateAdministered: '',
         validUntil: '',
         batchNumber: '',
-        vetName: '' // Começa vazio para ser preenchido pelo useEffect
+        vetName: ''
     });
 
-    // useEffect para buscar o nome do veterinário logado
     useEffect(() => {
         const fetchVetName = async () => {
             const user = auth.currentUser;

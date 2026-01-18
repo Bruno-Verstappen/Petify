@@ -7,10 +7,8 @@ const AuthPage = () => {
 
   return (
     <div className="auth-page-wrapper">
-      {/* Título Welcome à esquerda */}
       <h1 className="auth-welcome-text">Welcome</h1>
       
-      {/* Botões no centro */}
       <div className="auth-content-center">
         <div className="auth-buttons-group">
           <button className="btn-auth-main" onClick={() => navigate('/login')}>
@@ -21,13 +19,11 @@ const AuthPage = () => {
           </button>
         </div>
         
-        {/* Link para empresas logo abaixo do Register */}
         <p className="business-link" onClick={() => navigate('/RegisterEmpresa1')}>
           Do you have a business?
         </p>
       </div>
 
-      {/* Logótipo Petify à esquerda */}
       <h2 className="auth-petify-logo">Petify</h2>
     </div>
   );

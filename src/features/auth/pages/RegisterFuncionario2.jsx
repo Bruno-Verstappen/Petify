@@ -6,7 +6,6 @@ const RegisterFuncionario2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Recupera dados do Step 1 (Email/Pass)
   const step1Data = location.state?.step1 || {};
 
   const [formData, setFormData] = useState({
@@ -18,20 +17,17 @@ const RegisterFuncionario2 = () => {
   const [jobOptions, setJobOptions] = useState([]);
 
   useEffect(() => {
-    // Simulação de cargos vindos da base de dados
     const roles = ["Veterinário", "Auxiliar", "Recepcionista", "Administrador"];
     setJobOptions(roles);
   }, []);
 
   const handleBack = () => {
-    // Retorna ao Step 1 enviando os dados para persistência
     navigate('/RegisterFuncionario1', { state: { savedData: step1Data } });
   };
 
   const handleFinalRegister = (e) => {
     e.preventDefault();
     
-    // 1. Reúne todos os dados (Step 1 + Step 2)
     const finalPayload = { 
       ...step1Data, 
       ...formData,
@@ -40,8 +36,6 @@ const RegisterFuncionario2 = () => {
 
     console.log("Registo completo do funcionário:", finalPayload);
 
-    // 2. Aqui farias a chamada ao Firebase (ex: createUserWithEmailAndPassword)
-    // 3. Após o sucesso do registo, navegamos para a Home:
     navigate('/home'); 
   };
 

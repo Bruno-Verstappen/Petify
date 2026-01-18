@@ -21,7 +21,6 @@ const Clients = () => {
         ...doc.data()
       }));
 
-      // Filtra apenas utilizadores com role client
       const onlyClients = allUsers
         .filter(user => user.role === "client")
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
@@ -47,7 +46,6 @@ const Clients = () => {
 
   return (
     <div className="clients-page-main-wrapper">
-      {/* O Header fica colado ao topo do wrapper sem interferências */}
       <Header />
       
       <div className="clients-scrollable-content">

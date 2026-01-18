@@ -1,4 +1,3 @@
-/* Container de nível superior para acomodar o Header */
 .calendar-page-wrapper {
   display: flex;
   flex-direction: column;
@@ -7,11 +6,10 @@
   background: #121212;
 }
 
-/* Layout Base - Teu código original preservado */
 .calendar-container {
   display: flex;
   flex-direction: row;
-  flex: 1; /* Ocupa o resto da altura abaixo do header */
+  flex: 1;
   background: #121212;
   color: #fff;
   overflow: hidden;
@@ -106,7 +104,6 @@
 .dots-row { display: flex; gap: 3px; height: 6px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; }
 
-/* Barra Lateral */
 .calendar-sidebar {
   width: 300px;
   background: #181818;
@@ -151,7 +148,6 @@
   z-index: 10;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   top:0; left:0; right:0; bottom:0;
@@ -187,9 +183,6 @@
   gap: 10px;
 }
 
-/* -----------------------------------------------------------
-   RESPONSIVIDADE (MEDIA QUERIES) - Teu código original preservado
-   ----------------------------------------------------------- */
 
 @media (max-width: 900px) {
   .calendar-container {

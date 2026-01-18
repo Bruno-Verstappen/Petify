@@ -7,7 +7,6 @@ const RegisterFuncionario1 = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Recupera dados se houver um retorno do Step 2
   const savedData = location.state?.savedData || {};
 
   const [email, setEmail] = useState(savedData.email || '');
@@ -23,7 +22,6 @@ const RegisterFuncionario1 = () => {
       alert("Passwords do not match");
       return;
     }
-    // Passa os dados para a segunda parte do registo de funcionário
     navigate('/RegisterFuncionario2', { 
       state: { step1: { email, password } } 
     });

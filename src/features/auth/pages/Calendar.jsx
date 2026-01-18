@@ -83,12 +83,9 @@ const Calendar = () => {
     return [...events, ...formattedAppts];
   }, [events, appointments]);
 
-  // SOLUÇÃO PARA O BACKSPACE: Só atualiza o estado se a data estiver completa (YYYY-MM)
   const handleQuickDateChange = (e) => {
     const val = e.target.value;
     
-    // Se o valor estiver incompleto (enquanto apagas), não atualizamos o estado do calendário
-    // Isso permite que o browser mantenha o cursor onde queres
     if (val && val.length === 7) {
       const [year, month] = val.split("-");
       const date = new Date(parseInt(year), parseInt(month) - 1, 2);
@@ -159,7 +156,6 @@ const Calendar = () => {
             <div className="nav-tools">
               <input 
                 type="month" 
-                // Usamos defaultValue para que o browser controle a edição interna sem interrupções do React
                 key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
                 defaultValue={`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
                 onChange={handleQuickDateChange}

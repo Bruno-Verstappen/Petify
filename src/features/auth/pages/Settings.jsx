@@ -12,7 +12,6 @@ const Settings = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Dados do Utilizador
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -24,14 +23,11 @@ const Settings = () => {
 
   const [teamMembers, setTeamMembers] = useState([]);
 
-  // --- 1. BUSCAR DADOS (CORRIGIDO COM LISTENER) ---
   useEffect(() => {
-    // Este listener espera que a autenticação esteja pronta
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         await fetchUserData(user.uid);
       } else {
-        // Se não houver user, volta para login
         navigate('/login');
       }
       setLoading(false);
@@ -49,7 +45,7 @@ const Settings = () => {
         const data = userSnap.data();
         setUserData({ id: uid, ...data });
 
-        // Se for ADMIN, buscar a equipa usando o clinicId dele
+
         if (data.role === 'admin_empresa' && data.clinicId) {
             fetchTeam(data.clinicId, uid);
         }
@@ -64,7 +60,7 @@ const Settings = () => {
   const fetchTeam = async (clinicId, myUid) => {
     try {
         const usersRef = collection(db, "users");
-        // Procura users com o mesmo clinicId
+ 
         const q = query(usersRef, where("clinicId", "==", clinicId));
         const snapshot = await getDocs(q);
         
@@ -78,7 +74,7 @@ const Settings = () => {
     }
   };
 
-  // --- 2. SALVAR PERFIL ---
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -102,7 +98,7 @@ const Settings = () => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  // --- 3. ELIMINAR USER ---
+
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`Eliminar ${userName}?`)) return;
     try {
@@ -112,7 +108,7 @@ const Settings = () => {
     } catch (error) { console.error(error); }
   };
 
-  // Navegação
+
   const handleLogout = () => { auth.signOut(); navigate('/login'); };
   const handleNavigate = (path) => { setMenuOpen(false); if (path) navigate(path); };
   const toggleMenu = (e) => { e.stopPropagation(); setMenuOpen(!menuOpen); };

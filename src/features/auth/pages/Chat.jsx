@@ -22,7 +22,6 @@ const Chat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollRef = useRef();
 
-  // 1. Monitorar a lista de chats
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "chats"), async (snapshot) => {
       const chatsData = await Promise.all(snapshot.docs.map(async (chatDoc) => {
@@ -44,7 +43,6 @@ const Chat = () => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Monitorar mensagens
   useEffect(() => {
     if (!activeChat) return;
 
@@ -66,7 +64,6 @@ const Chat = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 3. Enviar mensagem
   const handleSend = async (e) => {
     e.preventDefault();
     if (input.trim() === "" || !activeChat) return;

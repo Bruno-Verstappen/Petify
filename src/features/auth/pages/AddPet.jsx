@@ -30,7 +30,6 @@ const AddPet = () => {
             
             if (userSnap.exists()) {
                 const userData = userSnap.data();
-                // Se tiver clinicId, usamos esse. Se não, usamos o próprio ID.
                 const finalId = (userData.clinicId && userData.clinicId.trim() !== "") 
                                 ? userData.clinicId 
                                 : user.uid;
@@ -115,7 +114,6 @@ const AddPet = () => {
       const petData = {
         id: petId,
         active: true,
-        // USAR O ID DO CENTRO/CHEFE, NÃO O DO MANEL
         adoptionCenterId: targetCenterId, 
         age: formData.age,
         breed: formData.breed,
@@ -137,7 +135,7 @@ const AddPet = () => {
 
       await setDoc(newPetRef, petData);
       alert(`Animal criado com sucesso!`);
-      navigate('/home-centro'); // Redireciona para a Home para veres logo o resultado
+      navigate('/home-centro');
 
     } catch (error) {
       console.error(error);

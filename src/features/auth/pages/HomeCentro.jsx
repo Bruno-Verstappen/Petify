@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase';
-import { collection, getDocs, updateDoc, doc, getDoc, addDoc } from 'firebase/firestore'; // <--- ADICIONEI addDoc
+import { collection, getDocs, updateDoc, doc, getDoc, addDoc } from 'firebase/firestore';
 import './HomeCentro.css';
 
 import menuIcon from '../../../assets/images/Hamburger_menu.png';
@@ -11,7 +11,6 @@ const HomeCentro = () => {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Estados dos Dados
   const [stats, setStats] = useState({ totalPets: 0, adoptions: 0, pending: 0, urgent: 0 });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [interviewRequests, setInterviewRequests] = useState([]);
@@ -19,7 +18,6 @@ const HomeCentro = () => {
   const [petsInCenter, setPetsInCenter] = useState([]);
   const [interviewDates, setInterviewDates] = useState({});
 
-  // --- BUSCAR DADOS ---
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -30,7 +28,6 @@ const HomeCentro = () => {
         return;
       }
 
-      // 1. DESCOBRIR QUAL ID DE CENTRO USAR
       let targetCenterId = currentUser.uid;
 
       const userDocRef = doc(db, "users", currentUser.uid);
@@ -43,7 +40,6 @@ const HomeCentro = () => {
         }
       }
 
-      // 2. BUSCAR ANIMAIS
       const petsRef = collection(db, "pets");
       const petsSnapshot = await getDocs(petsRef);
 
@@ -62,7 +58,6 @@ const HomeCentro = () => {
         }
       });
 
-      // 3. BUSCAR PEDIDOS DE ADOÇÃO
       const reqRef = collection(db, "adoption_requests");
       const reqSnapshot = await getDocs(reqRef);
 
@@ -114,7 +109,6 @@ const HomeCentro = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // --- NOVA FUNÇÃO: ENVIAR NOTIFICAÇÃO ---
   const sendNotification = async (userId, title, body) => {
     if (!userId) return;
     try {
@@ -131,15 +125,12 @@ const HomeCentro = () => {
     }
   };
 
-  // --- AÇÕES ---
 
-  // 1. MARCAR ENTREVISTA
   const handleScheduleInterview = async (reqId) => {
     const date = interviewDates[reqId];
     if (!date) { alert("Selecione uma data."); return; }
 
     try {
-      // Encontrar o pedido atual para obter o userId
       const requestItem = pendingRequests.find(r => r.id === reqId);
 
       await updateDoc(doc(db, "adoption_requests", reqId), {
@@ -147,7 +138,6 @@ const HomeCentro = () => {
         interviewDate: date
       });
 
-      // Enviar Notificação
       if (requestItem && requestItem.userId) {
         await sendNotification(
           requestItem.userId,
@@ -161,20 +151,17 @@ const HomeCentro = () => {
     } catch (error) { console.error(error); }
   };
 
-  // 2. DECISÃO FINAL
   const handleFinalDecision = async (req, decision) => {
     if (!window.confirm(decision === 'accepted' ? "Aceitar?" : "Recusar?")) return;
 
     try {
       await updateDoc(doc(db, "adoption_requests", req.id), { status: decision, requestStatus: 'concluido' });
 
-      // Se aceite, atualizar o animal
       if (decision === 'accepted' && req.petId) {
         const newOwnerId = req.userId || req.formData?.uid || "adopted_unknown";
         await updateDoc(doc(db, "pets", req.petId), { status: 'adopted', ownerId: newOwnerId, active: "false" });
       }
 
-      // Enviar Notificação
       const notifTitle = decision === 'accepted' ? "Parabéns! Adoção Aceite 🎉" : "Atualização do Pedido";
       const notifBody = decision === 'accepted'
         ? `O seu pedido de adoção para ${req.petName} foi aceite! O centro entrará em contacto.`
@@ -198,7 +185,6 @@ const HomeCentro = () => {
     return today > interviewDate;
   };
 
-  // NAVEGAÇÃO
   const handleLogout = () => { auth.signOut(); navigate('/login'); };
   const handleNavigate = (path) => { setMenuOpen(false); if (path) navigate(path); };
 
@@ -325,7 +311,6 @@ const HomeCentro = () => {
               {petsInCenter.map(pet => (
                 <div key={pet.id} className="pet-row">
                   <img
-                    // LÓGICA NOVA: Tenta ler o antigo OU o primeiro da lista nova
                     src={pet.imageUrl || (pet.images && pet.images.length > 0 ? pet.images[0] : "https://placehold.co/40")}
                     alt="pet"
                     className="avatar-tiny"

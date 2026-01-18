@@ -7,10 +7,7 @@ const RegisterEmpresa1 = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Recupera dados se o utilizador voltou da página 2
   const savedData = location.state?.savedData || {};
-
-  // Inicializa o estado com os dados recuperados ou vazio
   const [email, setEmail] = useState(savedData.email || '');
   const [password, setPassword] = useState(savedData.password || '');
   const [confirmPassword, setConfirmPassword] = useState(savedData.password || '');
@@ -24,7 +21,6 @@ const RegisterEmpresa1 = () => {
       alert("Passwords do not match");
       return;
     }
-    // Envia os dados atuais para o Step 2
     navigate('/RegisterEmpresa2', { 
       state: { step1: { email, password } } 
     });

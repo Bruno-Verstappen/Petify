@@ -16,7 +16,7 @@
 }
 
 .dash-header {
-    background: #2a2a2a; /* Cor sólida para garantir que vemos o menu */
+    background: #2a2a2a;
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
@@ -52,12 +52,12 @@
     position: absolute;
     top: 50px;
     right: 0;
-    background-color: #1a1a1a !important; /* Mais escuro que o header */
-    border: 2px solid #ffffff; /* Borda branca para destaque total */
+    background-color: #1a1a1a !important;
+    border: 2px solid #ffffff;
     border-radius: 8px;
     width: 180px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-    z-index: 999999; /* Valor extremo */
+    z-index: 999999;
     display: block !important;
 }
 
@@ -73,7 +73,6 @@
 .menu-item:hover { background-color: #333 !important; }
 .menu-item.logout { color: #ff6b6b !important; }
 
-/* Restante do CSS mantido igual */
 .left-panel { flex: 1; background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 15px; max-width: 250px; display: flex; flex-direction: column; }
 .vertical-scroll-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .request-card-small { background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px; }

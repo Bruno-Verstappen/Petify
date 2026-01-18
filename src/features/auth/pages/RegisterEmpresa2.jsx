@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import "./RegisterEmpresa2.css";
 
-// IMPORTS DO FIREBASE
 import { auth, db } from "/src/config/firebase";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; 
@@ -30,19 +29,16 @@ const RegisterEmpresa2 = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // 1. Validação simples
     if (!step1Data.password) {
       alert("Erro: Password em falta. Volte ao passo 1.");
       return;
     }
 
-    // Preparar dados comuns
-    const emailToRegister = formData.clinicEmail || step1Data.email; // Usa o do passo 2 ou fallback para passo 1
+    const emailToRegister = formData.clinicEmail || step1Data.email;
 
     console.log("A iniciar registo separado...");
 
     try {
-      // 2. Criar o Login na Autenticação
       const userCredential = await createUserWithEmailAndPassword(
         auth, 
         emailToRegister, 
@@ -51,27 +47,20 @@ const RegisterEmpresa2 = () => {
       
       const user = userCredential.user;
 
-      // ---------------------------------------------------------
-      // 3. GRAVAR NA TABELA USERS (Apenas dados de Login)
-      // ---------------------------------------------------------
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: emailToRegister,
-        role: "admin_empresa", // Define que este user gere uma clinica/centro
+        role: "admin_empresa",
         createdAt: new Date()
       });
 
-      // ---------------------------------------------------------
-      // 4. GRAVAR NA TABELA CLINICS (Dados da Empresa)
-      // Usamos o mesmo ID (user.uid) para facilitar a ligação depois
-      // ---------------------------------------------------------
       await setDoc(doc(db, "clinics", user.uid), {
-        uid: user.uid, // Ligação ao user
+        uid: user.uid,
         name: formData.clinicName,
         nif: formData.nif,
         phone: formData.phone,
         address: formData.address,
-        type: formData.type, // 'clinica veterinária' ou 'centro de adoção'
+        type: formData.type, 
         email: emailToRegister,
         status: "aceite",
         clinicCode: formData.nif

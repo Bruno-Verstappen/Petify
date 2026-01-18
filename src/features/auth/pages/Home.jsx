@@ -7,7 +7,6 @@ import {
 } from 'firebase/firestore';
 import './Home.css';
 
-// Assets
 import PetifyLogo from '../../../assets/images/Petify.png';
 import SearchIcon from '../../../assets/images/Search_tools.png';
 import ReadIcon from '../../../assets/images/Marcar_lido.png';
@@ -47,7 +46,6 @@ const Home = () => {
           const petData = petSnap.data();
           petInfo.name = petData.name;
           
-          // LÓGICA DE IMAGEM SINCRONIZADA (Igual ao Pets.jsx e Mobile)
           petInfo.img = 
             petData.displayImage || 
             (petData.images && petData.images.length > 0 ? petData.images[0] : null) || 
@@ -84,7 +82,6 @@ const Home = () => {
             const myVetId = user.uid; 
             setUserName(userData.name || "Veterinário");
 
-            // 1. Minhas Consultas
             const qMy = query(collection(db, "appointments"), where("vetId", "==", myVetId), where("status", "==", "confirmado"));
             unsubMyApps = onSnapshot(qMy, async (snap) => {
               const data = await Promise.all(snap.docs.map(d => getPetAndOwnerData({ id: d.id, ...d.data() })));
@@ -105,7 +102,6 @@ const Home = () => {
               });
             });
 
-            // 2. Pendentes
             const qPend = query(collection(db, "appointments"), where("clinicId", "==", myClinicId), where("status", "==", "pendente"));
             unsubPending = onSnapshot(qPend, async (snap) => {
               const data = await Promise.all(snap.docs.map(d => getPetAndOwnerData({ id: d.id, ...d.data() })));
@@ -113,7 +109,6 @@ const Home = () => {
               setLoading(false);
             });
 
-            // 3. Chats Recentes
             const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
             unsubChats = onSnapshot(qChats, async (snap) => {
               const chatData = await Promise.all(snap.docs.map(d => getPetAndOwnerData({ id: d.id, ...d.data() })));

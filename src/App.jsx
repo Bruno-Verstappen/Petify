@@ -40,7 +40,7 @@ function App() {
 <Route path="/clients/:clientId/pets" element={<Pets />} />
 <Route path="/home-centro" element={<HomeCentro />} />
 <Route path="/request/:id" element={<AdoptionDetail />} />
-
+<Route path="/home-clinica" element={<Home />} />
             <Route path="/add-pet" element={<AddPet />} />
       <Route path="/clients/:clientId/pets/:petId/add-vaccine" element={<AddVaccine />} />
       <Route path="/pet-list" element={<PetList />} />
