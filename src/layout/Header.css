@@ -1,20 +1,19 @@
-/* HEADER BASE */
 .petify-header-shared { 
   background: #333; 
   border-radius: 20px 20px 0 0; 
   height: 80px; 
   display: flex; 
   align-items: center; 
-  padding: 0 20px; /* Reduzi um pouco o padding lateral */
+  padding: 0 20px;
   justify-content: space-between; 
   position: relative;
   z-index: 100;
-  gap: 10px; /* Garante que os elementos não colam uns nos outros */
+  gap: 10px;
 }
 
 .main-logo { 
   height: 40px; 
-  flex-shrink: 0; /* Impede o logo de esmagar */
+  flex-shrink: 0;
 }
 
 .header-center { 
@@ -22,12 +21,12 @@
   display: flex; 
   justify-content: center; 
   padding: 0 10px; 
-  max-width: 600px; /* Em vez de width fixo */
+  max-width: 600px;
 }
 
 .search-bar-extra-large { 
   background: white !important; 
-  width: 100%; /* Ocupa o espaço disponível do header-center */
+  width: 100%;
   max-width: 600px;
   height: 40px; 
   border-radius: 12px; 
@@ -40,7 +39,7 @@
   border: none; 
   width: 100%; 
   outline: none; 
-  font-size: 14px; /* Ligeiramente menor para mobile */
+  font-size: 14px;
   background: transparent !important; 
   color: black !important; 
 }
@@ -50,48 +49,43 @@
 .header-right-icons { 
   display: flex; 
   align-items: center; 
-  gap: 20px; /* Reduzi o gap de 45px para ser mais flexível */
+  gap: 20px;
   flex-shrink: 0;
 }
 
 .h-icon-large { height: 28px; cursor: pointer; }
 .h-icon-bones-large { height: 35px; cursor: pointer; position: relative; z-index: 1200; }
 
-/* 📱 MEDIA QUERIES (PARA TELEMÓVEL) */
 
 @media (max-width: 768px) {
   .petify-header-shared {
     height: 70px;
     padding: 0 15px;
-    border-radius: 0; /* Opcional: remover cantos arredondados no mobile */
+    border-radius: 0;
   }
 
-  /* Esconde a barra de pesquisa no mobile para não apertar o header */
-  /* Se quiseres manter, podes apenas reduzir o tamanho */
   .header-center {
     display: none; 
   }
 
   .header-right-icons {
-    gap: 15px; /* Ícones mais próximos no mobile */
+    gap: 15px;
   }
 
   .main-logo {
     height: 30px;
   }
 
-  /* Se quiseres esconder ícones secundários no mobile */
   .h-icon-large[alt="mail"] {
     display: none;
   }
 }
 
-/* SIDE MENU (HAMBURGER) */
 .side-menu {
   position: fixed;
   top: 0;
   right: -320px;
-  width: 280px; /* Um pouco mais estreito para mobile */
+  width: 280px;
   height: 100%;
   background-color: #222;
   z-index: 1100;
