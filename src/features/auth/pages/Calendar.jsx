@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./Calendar.css";
-import { db, auth } from "../../../config/firebase"; // Certifique-react que o auth está exportado no seu config
+import { db, auth } from "../../../config/firebase";
 import { 
   collection, onSnapshot, addDoc, doc, getDoc, query, where 
 } from "firebase/firestore";
@@ -15,20 +15,18 @@ const Calendar = () => {
   const [currentVetId, setCurrentVetId] = useState(null);
   const [newEvent, setNewEvent] = useState({ title: "", description: "", urgency: "baixa" });
 
-  // 1. Monitorizar o estado de autenticação para obter o vetId
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentVetId(user.uid);
       } else {
         setCurrentVetId(null);
-        setAppointments([]); // Limpa se deslogar
+        setAppointments([]);
       }
     });
     return () => unsubscribeAuth();
   }, []);
 
-  // Cores de urgência
   const getUrgencyColor = (urgency) => {
     switch (urgency?.toLowerCase()) {
       case "alta": case "high": case "muito alta": return "#E53935";
@@ -38,11 +36,9 @@ const Calendar = () => {
     }
   };
 
-  // 2. Carregar dados filtrados por vetId
   useEffect(() => {
     if (!currentVetId) return;
 
-    // Filtra agendamentos apenas deste veterinário
     const qAppts = query(
       collection(db, "appointments"), 
       where("vetId", "==", currentVetId)
@@ -51,8 +47,6 @@ const Calendar = () => {
     const unsubAppts = onSnapshot(qAppts, async (snapshot) => {
       const apptsData = await Promise.all(snapshot.docs.map(async (apptDoc) => {
         const data = apptDoc.data();
-        
-        // Filtro de status (opcional, já que a query traz tudo do vet)
         if (!data.status?.toLowerCase().includes("confirmad")) return null;
 
         let petName = "Pet";
@@ -66,7 +60,6 @@ const Calendar = () => {
       setAppointments(apptsData.filter(a => a !== null));
     });
 
-    // Se os eventos também forem privados por vetId:
     const qEvents = query(collection(db, "events"), where("vetId", "==", currentVetId));
     const unsubEvents = onSnapshot(qEvents, (snapshot) => {
       setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -123,7 +116,6 @@ const Calendar = () => {
     return days;
   };
 
-  // Função para adicionar novo evento manual
   const handleAddEvent = async () => {
     if (!newEvent.title || !currentVetId) return;
     try {
@@ -186,7 +178,6 @@ const Calendar = () => {
         <button className="fab" onClick={() => setShowModal(true)}>+</button>
       </div>
 
-      {/* Modal Simples de Adição */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">

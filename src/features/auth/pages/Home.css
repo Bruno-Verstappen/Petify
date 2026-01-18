@@ -74,7 +74,7 @@
   height: calc(100vh - 120px); 
 }
 
-/* SIDEBAR */
+/* SIDEBAR - Com Scroll Restaurado */
 .medical-sidebar { 
   background: #9c9c9c; 
   border-radius: 0 0 0 20px; 
@@ -83,7 +83,11 @@
   flex-direction: column; 
   overflow: hidden; 
 }
-.sidebar-list { flex: 1; overflow-y: auto; padding-right: 5px; }
+.sidebar-list { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding-right: 5px; 
+}
 .sidebar-list::-webkit-scrollbar { width: 6px; }
 .sidebar-list::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
@@ -97,9 +101,14 @@
 }
 
 /* CARDS E URGÊNCIA */
-.sidebar-card-modern { background: #333; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: white; }
+.sidebar-card-modern { 
+  background: #333; 
+  border-radius: 10px; 
+  padding: 15px; 
+  margin-bottom: 15px; 
+  color: white; 
+}
 .card-main-content { display: flex; gap: 15px; }
-.title-urgency-row { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
 
 .urgency-dot-small { width: 14px; height: 14px; border-radius: 50%; display: block; flex-shrink: 0; }
 .urgency-dot-small.baixa { background-color: #4caf50 !important; }
@@ -109,7 +118,7 @@
 .pet-avatar-large { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; }
 .pet-name-label-large { font-weight: bold; font-size: 18px; margin-top: 6px; }
 
-/* DASHBOARD E ANALYTICS */
+/* DASHBOARD E ANALYTICS - Estilo Original 220px */
 .dashboard-content { 
   background: linear-gradient(to bottom, #bd9368, #4e4034); 
   padding: 25px; 
@@ -140,9 +149,10 @@
 .btn-accept-mini { background: #2e7d32; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; margin-right: 5px;}
 .btn-refuse-mini { background: #c62828; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-/* CHAT */
-.chat-list-bg { background: #3d3d3d; border-radius: 12px; }
-.chat-row-item { display: flex; padding: 15px; border-bottom: 1px solid #4d4d4d; color: white; align-items: center; }
+/* CHAT - Fundo Escuro Pedido */
+.dark-chat { background: #121212 !important; }
+.chat-list-bg { border-radius: 12px; }
+.chat-row-item { display: flex; padding: 15px; border-bottom: 1px solid #333; color: white; align-items: center; }
 .chat-row-item img { width: 50px; height: 50px; border-radius: 8px; margin-right: 15px; }
 
 .loading-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #1a1a1a; color: white; font-size: 3rem; }

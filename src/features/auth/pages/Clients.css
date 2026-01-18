@@ -67,9 +67,17 @@
   overflow: hidden;
 }
 
+/* Nova classe para permitir scroll lateral em ecrãs pequenos */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Melhora o scroll no iOS */
+}
+
 .custom-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Garante que a tabela não "esprema" em telemóveis, forçando o scroll */
 }
 
 .custom-table th {
@@ -119,11 +127,13 @@
 
 .name-text {
   font-weight: 500;
+  white-space: nowrap; /* Evita que o nome quebre linha */
 }
 
 .email-text, .phone-text {
   color: #aaa;
   font-size: 14px;
+  white-space: nowrap; /* Evita que o email quebre linha */
 }
 
 .actions-cell {

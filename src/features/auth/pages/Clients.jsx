@@ -71,42 +71,44 @@ const Clients = () => {
         {loading ? (
           <div className="status-msg">A carregar dados dos clientes...</div>
         ) : (
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>E-mail</th>
-                <th>Telefone</th>
-                <th style={{ textAlign: 'center' }}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredClients.map((client) => (
-                <tr key={client.id} className="table-row">
-                  <td className="name-cell">
-                    <div className="avatar-circle">
-                      {client.profileImageUrl ? (
-                        <img src={client.profileImageUrl} alt="perfil" />
-                      ) : (
-                        client.name?.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <span className="name-text">{client.name || 'Sem nome'}</span>
-                  </td>
-                  <td className="email-text">{client.email}</td>
-                  <td className="phone-text">{client.phone || 'N/A'}</td>
-                  <td className="actions-cell">
-                    <button 
-                      className="btn-view-pets"
-                      onClick={() => navigate(`/clients/${client.id}/pets`)}
-                    >
-                      Ver Pets
-                    </button>
-                  </td>
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>E-mail</th>
+                  <th>Telefone</th>
+                  <th style={{ textAlign: 'center' }}>Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="table-row">
+                    <td className="name-cell">
+                      <div className="avatar-circle">
+                        {client.profileImageUrl ? (
+                          <img src={client.profileImageUrl} alt="perfil" />
+                        ) : (
+                          client.name?.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <span className="name-text">{client.name || 'Sem nome'}</span>
+                    </td>
+                    <td className="email-text">{client.email}</td>
+                    <td className="phone-text">{client.phone || 'N/A'}</td>
+                    <td className="actions-cell">
+                      <button 
+                        className="btn-view-pets"
+                        onClick={() => navigate(`/clients/${client.id}/pets`)}
+                      >
+                        Ver Pets
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {!loading && filteredClients.length === 0 && (

@@ -6,7 +6,11 @@ import {
   onSnapshot, 
   addDoc,
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  query,
+  orderBy,
+  Timestamp
 } from "firebase/firestore";
 
 const Chat = () => {
@@ -14,36 +18,25 @@ const Chat = () => {
   const [activeChat, setActiveChat] = useState(null); 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollRef = useRef();
 
-  const getFormattedDate = () => {
-    const now = new Date();
-    const meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    const dia = now.getDate();
-    const mes = meses[now.getMonth()];
-    const ano = now.getFullYear();
-    const horas = String(now.getHours()).padStart(2, '0');
-    const minutos = String(now.getMinutes()).padStart(2, '0');
-    const segundos = String(now.getSeconds()).padStart(2, '0');
-    return `${dia} de ${mes} de ${ano} às ${horas}:${minutos}:${segundos} UTC`;
-  };
-
-  // Carregar chats e procurar nomes dos pets
+  // 1. Monitorar a lista de chats (Coleção Raiz)
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "chats"), async (snapshot) => {
       const chatsData = await Promise.all(snapshot.docs.map(async (chatDoc) => {
         const data = chatDoc.data();
-        let petName = "Pet sem nome";
-
-        // Se o chat tiver a referência do petId, vamos buscar à coleção 'pets'
+        let petName = "Pet";
+        
+        // Busca o nome do pet se o ID existir
         if (data.petId) {
-          const petDocRef = doc(db, "pets", data.petId);
-          const petSnapshot = await getDoc(petDocRef);
-          if (petSnapshot.exists()) {
-            petName = petSnapshot.data().name; // Aqui pegamos o 'name' da tabela pets
-          }
+          try {
+            const petDocRef = doc(db, "pets", data.petId);
+            const petSnapshot = await getDoc(petDocRef);
+            if (petSnapshot.exists()) petName = petSnapshot.data().name;
+          } catch (err) { console.error("Erro ao buscar pet:", err); }
         }
-
+        
         return { id: chatDoc.id, ...data, petName };
       }));
       setChats(chatsData);
@@ -51,29 +44,21 @@ const Chat = () => {
     return () => unsubscribe();
   }, []);
 
+  // 2. Monitorar mensagens da subcoleção do chat ativo
   useEffect(() => {
     if (!activeChat) return;
 
-    const unsubscribe = onSnapshot(
-      collection(db, "chats", activeChat.id, "messages"),
-      (snapshot) => {
-        const msgs = snapshot.docs.map(doc => {
-          const data = doc.data();
-          let sortTime = 0;
-          if (data.timestamp && typeof data.timestamp === 'string') {
-            const mesesMap = { janeiro: 0, fevereiro: 1, março: 2, abril: 3, maio: 4, junho: 5, julho: 6, agosto: 7, setembro: 8, outubro: 9, novembro: 10, dezembro: 11 };
-            try {
-              const p = data.timestamp.toLowerCase().split(' ');
-              const d = new Date(p[4], mesesMap[p[2]], p[0], ...p[6].split(':'));
-              sortTime = d.getTime();
-            } catch (e) { sortTime = Date.now(); }
-          }
-          return { id: doc.id, ...data, sortTime };
-        });
-        msgs.sort((a, b) => a.sortTime - b.sortTime);
-        setMessages(msgs);
-      }
-    );
+    const messagesRef = collection(db, "chats", activeChat.id, "messages");
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMessages(msgs);
+    });
+
     return () => unsubscribe();
   }, [activeChat]);
 
@@ -81,64 +66,100 @@ const Chat = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // 3. Enviar mensagem seguindo rigorosamente a lógica da sua função Kotlin
   const handleSend = async (e) => {
     e.preventDefault();
     if (input.trim() === "" || !activeChat) return;
 
     try {
-      await addDoc(collection(db, "chats", activeChat.id, "messages"), {
-        chatId: activeChat.id,
-        isRead: "false",
-        receiverId: activeChat.userId || "", 
-        senderId: "ADMIN_VET",
+      const now = Timestamp.now();
+      const chatId = activeChat.id;
+
+      // O site age como a CLINICA, logo o senderId é o clinicId do chat
+      const messageData = {
+        chatId: chatId,
+        senderId: activeChat.clinicId, // Agora usa clinicId conforme a nova função
+        receiverId: activeChat.userId,
         text: input,
-        timestamp: getFormattedDate()
-      });
+        timestamp: now,
+        petId: activeChat.petId || ""
+      };
+
+      const chatUpdateData = {
+        chatId: chatId,
+        userId: activeChat.userId,
+        clinicId: activeChat.clinicId, // Mantém clinicId no cabeçalho
+        lastMessage: input,
+        updatedAt: now,
+        userName: activeChat.userName || "Usuário",
+        petId: activeChat.petId || ""
+      };
+
+      // Grava na subcoleção de mensagens
+      await addDoc(collection(db, "chats", chatId, "messages"), messageData);
+
+      // Atualiza o documento pai do chat (SetOptions.merge() no Kotlin = merge: true no JS)
+      await setDoc(doc(db, "chats", chatId), chatUpdateData, { merge: true });
+
       setInput("");
     } catch (error) {
-      console.error("Erro:", error);
+      console.error("Erro ao enviar mensagem:", error);
     }
   };
 
   const displayTime = (ts) => {
-    if (!ts || typeof ts !== 'string' || !ts.includes(' às ')) return "...";
-    return ts.split(' às ')[1].substring(0, 5);
+    if (!ts) return "";
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleSelectChat = (chat) => {
+    setActiveChat(chat);
+    if (window.innerWidth <= 768) setIsSidebarOpen(false);
   };
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
-        <div className="sidebar-header"><h3>Mensagens</h3></div>
+      <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+        {isSidebarOpen ? "✕" : "☰"}
+      </button>
+
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <h3>Painel da Clínica</h3>
+        </div>
         <div className="chat-list">
           {chats.map(chat => (
             <div 
               key={chat.id} 
               className={`chat-item ${activeChat?.id === chat.id ? "active" : ""}`}
-              onClick={() => setActiveChat(chat)}
+              onClick={() => handleSelectChat(chat)}
             >
               <div className="chat-avatar">🐾</div>
               <div className="chat-info">
                 <p className="chat-name">{chat.petName}</p>
-                <p className="chat-last-msg">Dono: {chat.userName || "Cliente"}</p>
+                <p className="chat-last-msg">Dono: {chat.userName}</p>
               </div>
             </div>
           ))}
         </div>
       </aside>
 
+      <div className={`sidebar-overlay ${isSidebarOpen ? "visible" : ""}`} onClick={() => setIsSidebarOpen(false)}></div>
+
       <main className="chat-container">
         {activeChat ? (
           <>
             <header className="chat-header">
-              <h2>
-                {(activeChat.userName || "Cliente")} - {(activeChat.petName)}
-              </h2>
+              <h2>{activeChat.userName} <span style={{fontSize: '14px', opacity: 0.7}}>({activeChat.petName})</span></h2>
             </header>
+            
             <div className="messages-list">
               {messages.map((msg) => (
                 <div 
                   key={msg.id} 
-                  className={`message-bubble ${msg.senderId === 'ADMIN_VET' ? 'message-admin' : 'message-client'}`}
+                  // Lógica de bolha: Se o senderId da mensagem for igual ao clinicId, a mensagem é da clínica (admin)
+                  className={`message-bubble ${msg.senderId === activeChat.clinicId ? 'message-admin' : 'message-client'}`}
                 >
                   <p className="msg-content">{msg.text}</p>
                   <span className="timestamp">{displayTime(msg.timestamp)}</span>
@@ -146,18 +167,21 @@ const Chat = () => {
               ))}
               <div ref={scrollRef} />
             </div>
+
             <form className="chat-input-area" onSubmit={handleSend}>
               <input 
                 className="chat-input"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Escreva uma resposta..."
+                placeholder="Resposta da clínica..."
               />
               <button type="submit" className="send-button">➤</button>
             </form>
           </>
         ) : (
-          <div className="no-chat-selected">Selecione uma conversa para começar o atendimento.</div>
+          <div className="no-chat-selected">
+            <p>Selecione um cliente para responder.</p>
+          </div>
         )}
       </main>
     </div>

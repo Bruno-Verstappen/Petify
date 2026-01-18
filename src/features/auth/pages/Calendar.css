@@ -1,5 +1,7 @@
+/* Layout Base */
 .calendar-container {
   display: flex;
+  flex-direction: row;
   height: 100vh;
   background: #121212;
   color: #fff;
@@ -11,6 +13,7 @@
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
+  min-width: 0; /* Previne que o grid quebre o flexbox */
 }
 
 .calendar-nav {
@@ -18,6 +21,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.nav-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .month-picker {
@@ -29,6 +38,16 @@
   cursor: pointer;
 }
 
+.arrows button {
+  background: #252525;
+  border: 1px solid #333;
+  color: white;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 5px;
+}
+
 .calendar-wrapper {
   flex: 1;
   background: #1e1e1e;
@@ -36,7 +55,7 @@
   display: flex;
   flex-direction: column;
   padding: 10px;
-  max-height: calc(100vh - 120px); /* Evita scroll */
+  max-height: calc(100vh - 120px);
 }
 
 .grid-header {
@@ -46,12 +65,13 @@
   font-weight: bold;
   color: #666;
   padding-bottom: 10px;
+  font-size: 0.9rem;
 }
 
 .grid-body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(5, 1fr); /* Tenta manter 5 linhas */
+  grid-template-rows: repeat(5, 1fr);
   flex: 1;
   gap: 4px;
 }
@@ -65,23 +85,30 @@
   justify-content: center;
   transition: 0.2s;
   cursor: pointer;
-  min-height: 0;
+  min-height: 60px; /* Garante altura mínima em mobile */
 }
 
 .calendar-day.selected { background: #715639; }
 .calendar-day:hover:not(.empty) { background: #333; }
+.calendar-day.empty { cursor: default; background: transparent; }
 
 .day-num { font-size: 1rem; margin-bottom: 4px; }
 
-.dots-row { display: flex; gap: 3px; }
-.dot { width: 5px; height: 5px; border-radius: 50%; }
+.dots-row { display: flex; gap: 3px; height: 6px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; }
 
+/* Barra Lateral */
 .calendar-sidebar {
   width: 300px;
   background: #181818;
   padding: 1.5rem;
   border-left: 1px solid #222;
   position: relative;
+  overflow-y: auto;
+}
+
+.sidebar-list {
+  margin-top: 1rem;
 }
 
 .mini-card {
@@ -92,7 +119,12 @@
   border-left: 4px solid #715639;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
+
+.mini-card strong { font-size: 0.95rem; }
+.mini-card small { color: #aaa; }
+.mini-card span { font-size: 0.85rem; color: #715639; font-weight: bold; }
 
 .fab {
   position: absolute;
@@ -106,4 +138,85 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-content input, .modal-content select {
+  padding: 10px;
+  background: #252525;
+  border: 1px solid #333;
+  color: white;
+  border-radius: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* -----------------------------------------------------------
+   RESPONSIVIDADE (MEDIA QUERIES)
+   ----------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .calendar-container {
+    flex-direction: column; /* Empilha verticalmente */
+    overflow-y: auto; /* Permite scroll na página inteira */
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .calendar-main {
+    padding: 1rem;
+    flex: none; /* Deixa o calendário ocupar o espaço que precisa */
+  }
+
+  .calendar-wrapper {
+    max-height: none; /* Remove a limitação de altura do grid */
+  }
+
+  .calendar-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #222;
+    padding: 1.5rem;
+    min-height: 300px;
+    padding-bottom: 100px; /* Espaço para não cobrir o FAB */
+  }
+
+  .fab {
+    position: fixed; /* Fixa o botão no canto do ecrã */
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .grid-header { font-size: 0.7rem; }
+  .day-num { font-size: 0.85rem; }
+  .calendar-nav h2 { font-size: 1.2rem; }
 }

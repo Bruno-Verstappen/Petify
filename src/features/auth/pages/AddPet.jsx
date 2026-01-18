@@ -1,198 +1,234 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, storage } from "/src/config/firebase"; // Adicionado storage
-import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Importação das funções de storage
-import "./AddPet.css";
+import { db, auth, storage } from '../../../config/firebase'; 
+import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import './AddPet.css';
+
+// Import do ícone do menu
+import menuIcon from '../../../assets/images/Hamburger_menu.png'; 
 
 const AddPet = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
-  // Estado para a Imagem
-  const [imageFile, setImageFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Estado para os Dados
+  // --- VERIFICAÇÃO DE AUTENTICAÇÃO ---
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        // Se não houver utilizador, volta ao login para evitar erros de ID
+        navigate('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // --- DADOS DE ESPÉCIES E RAÇAS ---
+  const speciesData = {
+    "Cão": ["Labrador", "Pastor Alemão", "Bulldog", "Poodle", "Golden Retriever", "Beagle", "Chihuahua", "Rottweiler", "Yorkshire", "Boxer", "SRD (Rafeiro)", "Outro"],
+    "Gato": ["Persa", "Siamês", "Maine Coon", "Bengal", "Angorá", "Sphynx", "Ragdoll", "SRD (Rafeiro)", "Outro"],
+    "Pássaro": ["Canário", "Papagaio", "Periquito", "Caturra", "Agaporni", "Rola", "Outro"],
+    "Outro": ["Coelho", "Hamster", "Tartaruga", "Lagarto"]
+  };
+
+  // Estados do Formulário
   const [formData, setFormData] = useState({
     name: '',
-    species: 'dog', // Valor inicial para evitar campos vazios no select
+    species: '',
     breed: '',
     age: '',
     weight: '',
-    sex: 'M', // Valor inicial
     microchip: '',
+    sex: '',
     description: ''
   });
 
-  // Lidar com a seleção da imagem
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSpeciesChange = (e) => {
+    setFormData({ 
+        ...formData, 
+        species: e.target.value, 
+        breed: '' 
+    });
+  };
+
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file)); // Cria uma pré-visualização
+    if (e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+      setPreview(URL.createObjectURL(e.target.files[0]));
     }
   };
 
+  // --- SUBMETER ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    
+    // Verificação robusta antes de começar
+    if (!currentUser) {
+      alert("Erro: Deves estar logado para adicionar um animal.");
+      return;
+    }
+
+    if (!formData.name || !formData.species || !imageFile) {
+      alert("Por favor preencha o Nome, Espécie e escolha uma Imagem.");
+      return;
+    }
 
     try {
-      let downloadUrl = "";
+      setLoading(true);
 
-      // 1. Upload da Imagem (Se foi selecionada)
-      if (imageFile) {
-        // Criamos uma referência única no Storage usando o timestamp
-        const imageRef = ref(storage, `pet_images/${Date.now()}_${imageFile.name}`);
-        const uploadResult = await uploadBytes(imageRef, imageFile);
-        downloadUrl = await getDownloadURL(uploadResult.ref);
-      } else {
-        // Imagem default se não escolherem nenhuma
-        downloadUrl = "https://placehold.co/400x400?text=No+Photo";
-      }
+      // 1. Upload Imagem
+      const storageRef = ref(storage, `pet_images/${Date.now()}_${imageFile.name}`);
+      const snapshot = await uploadBytes(storageRef, imageFile);
+      const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // 2. Gravar na Base de Dados (Coleção "pets")
-      await addDoc(collection(db, "pets"), {
-        name: formData.name,
-        species: formData.species,
-        breed: formData.breed,
+      // 2. Criar Documento
+      // Nota: O ID do centro é pego diretamente do estado currentUser definido no useEffect
+      const petData = {
+        active: "true",                 
+        adoptionCenterId: currentUser.uid, 
         age: formData.age,
-        weight: formData.weight,
-        sex: formData.sex,
-        microchip: formData.microchip,
+        breed: formData.breed,
+        createdAt: serverTimestamp(),
         description: formData.description,
-        imageUrl: downloadUrl,
-        status: "available", // Importante para aparecer na lista de adoção
-        ownerId: "",         // Vazio conforme solicitado
-        createdAt: new Date()
+        imageUrl: downloadURL,
+        microchip: formData.microchip,
+        name: formData.name,
+        ownerId: "",               
+        sex: formData.sex,
+        species: formData.species,
+        status: "available",       
+        weight: formData.weight
+      };
+
+      const docRef = await addDoc(collection(db, "pets"), petData);
+
+      // 3. Atualizar com o petId
+      await updateDoc(doc(db, "pets", docRef.id), {
+        petId: docRef.id
       });
 
-      alert("Animal adicionado com sucesso!");
-      navigate('/home-centro'); // Redireciona para a Dashboard do Centro
+      alert("Animal criado com sucesso!");
+      navigate('/pet-list');
 
     } catch (error) {
-      console.error("Erro ao criar pet:", error);
-      alert("Erro ao criar pet: " + error.message);
+      console.error("Erro ao criar:", error);
+      alert("Erro ao guardar na base de dados: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLogout = () => { auth.signOut(); navigate('/login'); };
+  const handleNavigate = (path) => { setMenuOpen(false); if(path) navigate(path); };
+
+  const currentBreeds = formData.species ? speciesData[formData.species] : [];
+
   return (
-    <div className="add-pet-container">
-      <div className="form-card">
-        <h2>Adicionar Novo Animal</h2>
-        
-        <form onSubmit={handleSubmit}>
-          
-          {/* Upload de Imagem */}
-          <div className="image-upload-section">
-            <div 
-              className="image-preview" 
-              style={{backgroundImage: `url(${previewUrl || 'https://placehold.co/200?text=Upload+Photo'})`}}
-            ></div>
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageChange} 
-              required 
+    <div className="add-pet-container" onClick={() => setMenuOpen(false)}>
+      
+      <header className="dash-header">
+        <h1 className="logo-text">Petify <span className="sub-logo">Center Admin</span></h1>
+        <div className="header-actions">
+          <div className="menu-container">
+            <img 
+              src={menuIcon} 
+              alt="Menu" 
+              className="hamburger-icon" 
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }} 
             />
+            {menuOpen && (
+              <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                <div className="menu-item" onClick={() => handleNavigate('/home-centro')}>Home</div>
+                <div className="menu-item" onClick={() => handleNavigate('/pet-list')}>Pets</div>
+                <div className="menu-item logout" onClick={handleLogout}>Logout</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="add-pet-content">
+        <h2 className="page-title">Add New Pet</h2>
+        
+        <form className="pet-form" onSubmit={handleSubmit}>
+          
+          <div className="image-upload-section">
+            <label htmlFor="file-input" className="image-placeholder">
+              {preview ? <img src={preview} alt="Preview" /> : <span>+ Add Photo</span>}
+            </label>
+            <input id="file-input" type="file" accept="image/*" onChange={handleImageChange} style={{display:'none'}} />
           </div>
 
           <div className="form-grid">
             <div className="input-group">
-              <label>Nome</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onChange={e => setFormData({...formData, name: e.target.value})} 
-                required 
-              />
+                <label>Nome*</label>
+                <input name="name" placeholder="Ex: Max" onChange={handleChange} required />
             </div>
 
             <div className="input-group">
-              <label>Espécie</label>
-              <select 
-                value={formData.species} 
-                onChange={e => setFormData({...formData, species: e.target.value})}
-              >
-                <option value="Cão">Cão</option>
-                <option value="Gato">Gato</option>
-                <option value="Pássaro">Pássaro</option>
-                <option value="Outro">Outro</option>
-              </select>
+                <label>Espécie*</label>
+                <select name="species" value={formData.species} onChange={handleSpeciesChange} className="dark-select" required>
+                    <option value="">Selecionar...</option>
+                    {Object.keys(speciesData).map(specie => (
+                        <option key={specie} value={specie}>{specie}</option>
+                    ))}
+                </select>
             </div>
 
             <div className="input-group">
-              <label>Raça</label>
-              <input 
-                type="text" 
-                value={formData.breed} 
-                onChange={e => setFormData({...formData, breed: e.target.value})} 
-                required 
-              />
+                <label>Raça</label>
+                <select name="breed" value={formData.breed} onChange={handleChange} className="dark-select" disabled={!formData.species}>
+                    <option value="">Selecionar...</option>
+                    {currentBreeds.map(raca => (
+                        <option key={raca} value={raca}>{raca}</option>
+                    ))}
+                </select>
             </div>
 
             <div className="input-group">
-              <label>Idade (anos)</label>
-              <input 
-                type="number" 
-                value={formData.age} 
-                onChange={e => setFormData({...formData, age: e.target.value})} 
-                required 
-              />
+                <label>Idade (anos)</label>
+                <input name="age" type="number" placeholder="2" onChange={handleChange} />
             </div>
 
             <div className="input-group">
-              <label>Peso (kg)</label>
-              <input 
-                type="number" 
-                value={formData.weight} 
-                onChange={e => setFormData({...formData, weight: e.target.value})} 
-                required 
-              />
+                <label>Peso (kg)</label>
+                <input name="weight" type="number" step="0.1" placeholder="5.0" onChange={handleChange} />
             </div>
 
             <div className="input-group">
-              <label>Sexo</label>
-              <select 
-                value={formData.sex} 
-                onChange={e => setFormData({...formData, sex: e.target.value})}
-              >
-                <option value="M">Macho</option>
-                <option value="F">Fêmea</option>
-              </select>
+                <label>Sexo</label>
+                <select name="sex" value={formData.sex} onChange={handleChange} className="dark-select">
+                    <option value="">Selecionar...</option>
+                    <option value="Macho">Macho</option>
+                    <option value="Fêmea">Fêmea</option>
+                </select>
             </div>
 
             <div className="input-group full-width">
-              <label>Microchip</label>
-              <input 
-                type="text" 
-                value={formData.microchip} 
-                onChange={e => setFormData({...formData, microchip: e.target.value})} 
-              />
+                <label>Microchip</label>
+                <input name="microchip" placeholder="Número do microchip" onChange={handleChange} />
             </div>
 
             <div className="input-group full-width">
-              <label>Descrição / História</label>
-              <textarea 
-                rows="3" 
-                value={formData.description} 
-                onChange={e => setFormData({...formData, description: e.target.value})} 
-                placeholder="Escreve aqui sobre o animal..."
-              ></textarea>
+                <label>Descrição</label>
+                <textarea name="description" placeholder="Descreva a personalidade do animal..." rows="3" onChange={handleChange}></textarea>
             </div>
           </div>
 
-          <div className="button-row">
-            <button type="button" className="btn-cancel" onClick={() => navigate('/home-centro')}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-save" disabled={loading}>
-              {loading ? "A guardar..." : "Guardar Animal"}
-            </button>
-          </div>
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? "A Guardar..." : "Adicionar Animal"}
+          </button>
 
         </form>
       </div>
