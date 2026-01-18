@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth, storage } from '../../../config/firebase'; 
-import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore'; // <--- ADICIONADO getDoc
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './AddPet.css';
 
-// Import do ícone do menu
 import menuIcon from '../../../assets/images/Hamburger_menu.png'; 
 
 const AddPet = () => {
@@ -13,21 +12,46 @@ const AddPet = () => {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // ESTADO NOVO: Guardar o ID correto do centro (pode ser o ID do user ou do Chefe)
+  const [targetCenterId, setTargetCenterId] = useState(null);
 
-  // --- VERIFICAÇÃO DE AUTENTICAÇÃO ---
+  // --- VERIFICAÇÃO DE AUTENTICAÇÃO E PERFIL ---
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setCurrentUser(user);
+        
+        // --- CORREÇÃO AQUI ---
+        // Vamos descobrir se este user é um funcionário e quem é a empresa dele
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userDocRef);
+            
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                // Se tiver clinicId, usamos esse. Se não, usamos o próprio ID.
+                const finalId = (userData.clinicId && userData.clinicId.trim() !== "") 
+                                ? userData.clinicId 
+                                : user.uid;
+                
+                setTargetCenterId(finalId);
+                console.log("A adicionar animal para o centro ID:", finalId);
+            } else {
+                setTargetCenterId(user.uid);
+            }
+        } catch (error) {
+            console.error("Erro ao ler perfil:", error);
+            setTargetCenterId(user.uid);
+        }
+
       } else {
-        // Se não houver utilizador, volta ao login para evitar erros de ID
         navigate('/login');
       }
     });
     return () => unsubscribe();
   }, [navigate]);
 
-  // --- DADOS DE ESPÉCIES E RAÇAS ---
   const speciesData = {
     "Cão": ["Labrador", "Pastor Alemão", "Bulldog", "Poodle", "Golden Retriever", "Beagle", "Chihuahua", "Rottweiler", "Yorkshire", "Boxer", "SRD (Rafeiro)", "Outro"],
     "Gato": ["Persa", "Siamês", "Maine Coon", "Bengal", "Angorá", "Sphynx", "Ragdoll", "SRD (Rafeiro)", "Outro"],
@@ -35,95 +59,89 @@ const AddPet = () => {
     "Outro": ["Coelho", "Hamster", "Tartaruga", "Lagarto"]
   };
 
-  // Estados do Formulário
   const [formData, setFormData] = useState({
-    name: '',
-    species: '',
-    breed: '',
-    age: '',
-    weight: '',
-    microchip: '',
-    sex: '',
-    description: ''
+    name: '', species: '', breed: '', age: '', weight: '', microchip: '', sex: '', description: ''
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSpeciesChange = (e) => {
-    setFormData({ 
-        ...formData, 
-        species: e.target.value, 
-        breed: '' 
-    });
+    setFormData({ ...formData, species: e.target.value, breed: '' });
   };
 
   const handleImageChange = (e) => {
-    if (e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setPreview(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...newFiles]);
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPreviews(prev => [...prev, ...newPreviews]);
     }
+    e.target.value = '';
   };
 
-  // --- SUBMETER ---
+  const handleRemoveImage = (indexToRemove) => {
+    setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    setPreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Verificação robusta antes de começar
-    if (!currentUser) {
-      alert("Erro: Deves estar logado para adicionar um animal.");
-      return;
-    }
-
-    if (!formData.name || !formData.species || !imageFile) {
-      alert("Por favor preencha o Nome, Espécie e escolha uma Imagem.");
-      return;
+    if (!currentUser || !targetCenterId) return alert("A carregar perfil... Tente novamente em instantes.");
+    if (!formData.name || !formData.species || imageFiles.length === 0) {
+      return alert("Preencha Nome, Espécie e adicione pelo menos uma foto.");
     }
 
     try {
       setLoading(true);
+      const newPetRef = doc(collection(db, "pets"));
+      const petId = newPetRef.id;
+      const imageUrls = [];
 
-      // 1. Upload Imagem
-      const storageRef = ref(storage, `pet_images/${Date.now()}_${imageFile.name}`);
-      const snapshot = await uploadBytes(storageRef, imageFile);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      await Promise.all(
+        imageFiles.map(async (file, index) => {
+          const storageRef = ref(storage, `petimages/${petId}/image${index}_${Date.now()}.jpg`);
+          const snapshot = await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          imageUrls.push(url);
+        })
+      );
 
-      // 2. Criar Documento
-      // Nota: O ID do centro é pego diretamente do estado currentUser definido no useEffect
       const petData = {
-        active: "true",                 
-        adoptionCenterId: currentUser.uid, 
+        id: petId,
+        active: true,
+        // USAR O ID DO CENTRO/CHEFE, NÃO O DO MANEL
+        adoptionCenterId: targetCenterId, 
         age: formData.age,
         breed: formData.breed,
         createdAt: serverTimestamp(),
+        timestamp: serverTimestamp(),
         description: formData.description,
-        imageUrl: downloadURL,
+        
+        images: imageUrls, 
+        imageUrl: imageUrls.length > 0 ? imageUrls[0] : "", 
+        
         microchip: formData.microchip,
-        name: formData.name,
-        ownerId: "",               
+        name: formData.name.toLowerCase(),
+        ownerId: "",               
         sex: formData.sex,
         species: formData.species,
-        status: "available",       
+        status: "available",       
         weight: formData.weight
       };
 
-      const docRef = await addDoc(collection(db, "pets"), petData);
-
-      // 3. Atualizar com o petId
-      await updateDoc(doc(db, "pets", docRef.id), {
-        petId: docRef.id
-      });
-
-      alert("Animal criado com sucesso!");
-      navigate('/pet-list');
+      await setDoc(newPetRef, petData);
+      alert(`Animal criado com sucesso!`);
+      navigate('/home-centro'); // Redireciona para a Home para veres logo o resultado
 
     } catch (error) {
-      console.error("Erro ao criar:", error);
-      alert("Erro ao guardar na base de dados: " + error.message);
+      console.error(error);
+      alert("Erro ao guardar: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -131,22 +149,15 @@ const AddPet = () => {
 
   const handleLogout = () => { auth.signOut(); navigate('/login'); };
   const handleNavigate = (path) => { setMenuOpen(false); if(path) navigate(path); };
-
   const currentBreeds = formData.species ? speciesData[formData.species] : [];
 
   return (
     <div className="add-pet-container" onClick={() => setMenuOpen(false)}>
-      
       <header className="dash-header">
         <h1 className="logo-text">Petify <span className="sub-logo">Center Admin</span></h1>
         <div className="header-actions">
           <div className="menu-container">
-            <img 
-              src={menuIcon} 
-              alt="Menu" 
-              className="hamburger-icon" 
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }} 
-            />
+            <img src={menuIcon} alt="Menu" className="hamburger-icon" onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }} />
             {menuOpen && (
               <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
                 <div className="menu-item" onClick={() => handleNavigate('/home-centro')}>Home</div>
@@ -163,11 +174,44 @@ const AddPet = () => {
         
         <form className="pet-form" onSubmit={handleSubmit}>
           
-          <div className="image-upload-section">
-            <label htmlFor="file-input" className="image-placeholder">
-              {preview ? <img src={preview} alt="Preview" /> : <span>+ Add Photo</span>}
+          <div className="image-section-label">
+             Fotos (A primeira será a capa)
+          </div>
+          
+          <div className="image-gallery-container">
+            {previews.map((src, index) => (
+                <div key={index} className="image-preview-wrapper">
+                    <img 
+                        src={src} 
+                        alt={`Pet ${index}`} 
+                        className="preview-thumb" 
+                        style={index === 0 ? {border: '2px solid #4CAF50'} : {}}
+                    />
+                    {index === 0 && <span className="cover-badge">Capa</span>}
+                    
+                    <button 
+                        type="button" 
+                        className="remove-img-btn"
+                        onClick={() => handleRemoveImage(index)}
+                    >
+                        ✕
+                    </button>
+                </div>
+            ))}
+
+            <label htmlFor="file-input" className="add-photo-btn">
+                <span className="plus-sign">+</span>
+                <span className="add-text">Add Photos</span>
             </label>
-            <input id="file-input" type="file" accept="image/*" onChange={handleImageChange} style={{display:'none'}} />
+            
+            <input 
+                id="file-input" 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                style={{display:'none'}} 
+            />
           </div>
 
           <div className="form-grid">
@@ -198,7 +242,7 @@ const AddPet = () => {
 
             <div className="input-group">
                 <label>Idade (anos)</label>
-                <input name="age" type="number" placeholder="2" onChange={handleChange} />
+                <input name="age" type="text" placeholder="Ex: 2 anos" onChange={handleChange} />
             </div>
 
             <div className="input-group">

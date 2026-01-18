@@ -1,0 +1,123 @@
+/* HEADER BASE */
+.petify-header-shared { 
+  background: #333; 
+  border-radius: 20px 20px 0 0; 
+  height: 80px; 
+  display: flex; 
+  align-items: center; 
+  padding: 0 20px; /* Reduzi um pouco o padding lateral */
+  justify-content: space-between; 
+  position: relative;
+  z-index: 100;
+  gap: 10px; /* Garante que os elementos não colam uns nos outros */
+}
+
+.main-logo { 
+  height: 40px; 
+  flex-shrink: 0; /* Impede o logo de esmagar */
+}
+
+.header-center { 
+  flex: 1; 
+  display: flex; 
+  justify-content: center; 
+  padding: 0 10px; 
+  max-width: 600px; /* Em vez de width fixo */
+}
+
+.search-bar-extra-large { 
+  background: white !important; 
+  width: 100%; /* Ocupa o espaço disponível do header-center */
+  max-width: 600px;
+  height: 40px; 
+  border-radius: 12px; 
+  display: flex; 
+  align-items: center; 
+  padding: 0 15px; 
+}
+
+.input-white-bg { 
+  border: none; 
+  width: 100%; 
+  outline: none; 
+  font-size: 14px; /* Ligeiramente menor para mobile */
+  background: transparent !important; 
+  color: black !important; 
+}
+
+.icon-search-header { height: 18px; cursor: pointer; }
+
+.header-right-icons { 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; /* Reduzi o gap de 45px para ser mais flexível */
+  flex-shrink: 0;
+}
+
+.h-icon-large { height: 28px; cursor: pointer; }
+.h-icon-bones-large { height: 35px; cursor: pointer; position: relative; z-index: 1200; }
+
+/* 📱 MEDIA QUERIES (PARA TELEMÓVEL) */
+
+@media (max-width: 768px) {
+  .petify-header-shared {
+    height: 70px;
+    padding: 0 15px;
+    border-radius: 0; /* Opcional: remover cantos arredondados no mobile */
+  }
+
+  /* Esconde a barra de pesquisa no mobile para não apertar o header */
+  /* Se quiseres manter, podes apenas reduzir o tamanho */
+  .header-center {
+    display: none; 
+  }
+
+  .header-right-icons {
+    gap: 15px; /* Ícones mais próximos no mobile */
+  }
+
+  .main-logo {
+    height: 30px;
+  }
+
+  /* Se quiseres esconder ícones secundários no mobile */
+  .h-icon-large[alt="mail"] {
+    display: none;
+  }
+}
+
+/* SIDE MENU (HAMBURGER) */
+.side-menu {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 280px; /* Um pouco mais estreito para mobile */
+  height: 100%;
+  background-color: #222;
+  z-index: 1100;
+  transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px;
+}
+
+.side-menu.open { right: 0; }
+
+.menu-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh; 
+  background: rgba(0,0,0,0.6); 
+  z-index: 1000; 
+}
+
+.menu-item { 
+  color: white; 
+  padding: 15px 30px; 
+  font-size: 18px; 
+  cursor: pointer; 
+  border-bottom: 1px solid #333; 
+}

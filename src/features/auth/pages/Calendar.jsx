@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./Calendar.css";
-import { db, auth } from "../../../config/firebase";
+import { db, auth } from "../../../config/firebase"; 
 import { 
   collection, onSnapshot, addDoc, doc, getDoc, query, where 
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import Header from "../../../layout/Header"; 
 
 const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -82,10 +83,20 @@ const Calendar = () => {
     return [...events, ...formattedAppts];
   }, [events, appointments]);
 
+  // SOLUÇÃO PARA O BACKSPACE: Só atualiza o estado se a data estiver completa (YYYY-MM)
   const handleQuickDateChange = (e) => {
-    const date = new Date(e.target.value + "-02");
-    setCurrentMonth(date);
-    setSelectedDate(date);
+    const val = e.target.value;
+    
+    // Se o valor estiver incompleto (enquanto apagas), não atualizamos o estado do calendário
+    // Isso permite que o browser mantenha o cursor onde queres
+    if (val && val.length === 7) {
+      const [year, month] = val.split("-");
+      const date = new Date(parseInt(year), parseInt(month) - 1, 2);
+      if (!isNaN(date.getTime())) {
+        setCurrentMonth(date);
+        setSelectedDate(date);
+      }
+    }
   };
 
   const renderDays = () => {
@@ -100,10 +111,16 @@ const Calendar = () => {
     for (let d = 1; d <= totalDays; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayEvents = combinedEvents.filter(e => e.date === dateStr);
-      const isSelected = selectedDate.getDate() === d && selectedDate.getMonth() === month;
+      const isSelected = selectedDate.getDate() === d && 
+                         selectedDate.getMonth() === month &&
+                         selectedDate.getFullYear() === year;
 
       days.push(
-        <div key={d} className={`calendar-day ${isSelected ? 'selected' : ''}`} onClick={() => setSelectedDate(new Date(year, month, d))}>
+        <div 
+          key={d} 
+          className={`calendar-day ${isSelected ? 'selected' : ''}`} 
+          onClick={() => setSelectedDate(new Date(year, month, d))}
+        >
           <span className="day-num">{d}</span>
           <div className="dots-row">
             {dayEvents.slice(0, 3).map((e, i) => (
@@ -133,73 +150,78 @@ const Calendar = () => {
   };
 
   return (
-    <div className="calendar-container">
-      <div className="calendar-main">
-        <div className="calendar-nav">
-          <h2>Calendário</h2>
-          <div className="nav-tools">
-            <input 
-              type="month" 
-              value={`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
-              onChange={handleQuickDateChange}
-              className="month-picker"
-            />
-            <div className="arrows">
-              <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>&lt;</button>
-              <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>&gt;</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="calendar-wrapper">
-          <div className="grid-header">
-            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => <div key={d}>{d}</div>)}
-          </div>
-          <div className="grid-body">{renderDays()}</div>
-        </div>
-      </div>
-
-      <div className="calendar-sidebar">
-        <h3>{selectedDate.toLocaleDateString('pt-PT')}</h3>
-        <div className="sidebar-list">
-          {combinedEvents
-            .filter(e => e.date === selectedDate.toISOString().split('T')[0])
-            .map(event => (
-              <div key={event.id} className="mini-card" style={{ borderLeftColor: getUrgencyColor(event.urgency) }}>
-                <strong>{event.title}</strong>
-                {event.reason && <small>{event.reason}</small>}
-                {event.time && <span>🕒 {event.time}</span>}
+    <div className="calendar-page-wrapper">
+      <Header />
+      <div className="calendar-container">
+        <div className="calendar-main">
+          <div className="calendar-nav">
+            <h2>Calendário</h2>
+            <div className="nav-tools">
+              <input 
+                type="month" 
+                // Usamos defaultValue para que o browser controle a edição interna sem interrupções do React
+                key={`${currentMonth.getFullYear()}-${currentMonth.getMonth()}`}
+                defaultValue={`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
+                onChange={handleQuickDateChange}
+                className="month-picker"
+              />
+              <div className="arrows">
+                <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>&lt;</button>
+                <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>&gt;</button>
               </div>
-            ))}
-          {combinedEvents.filter(e => e.date === selectedDate.toISOString().split('T')[0]).length === 0 && (
-            <p style={{ color: "#666", fontSize: "0.9rem" }}>Sem compromissos.</p>
-          )}
-        </div>
-        <button className="fab" onClick={() => setShowModal(true)}>+</button>
-      </div>
-
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Novo Lembrete</h3>
-            <input 
-              type="text" 
-              placeholder="Título" 
-              value={newEvent.title} 
-              onChange={(e) => setNewEvent({...newEvent, title: e.target.value})} 
-            />
-            <select value={newEvent.urgency} onChange={(e) => setNewEvent({...newEvent, urgency: e.target.value})}>
-              <option value="baixa">Baixa Urgência</option>
-              <option value="media">Média Urgência</option>
-              <option value="alta">Alta Urgência</option>
-            </select>
-            <div className="modal-actions">
-              <button onClick={() => setShowModal(false)}>Cancelar</button>
-              <button onClick={handleAddEvent}>Salvar</button>
             </div>
           </div>
+
+          <div className="calendar-wrapper">
+            <div className="grid-header">
+              {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => <div key={d}>{d}</div>)}
+            </div>
+            <div className="grid-body">{renderDays()}</div>
+          </div>
         </div>
-      )}
+
+        <div className="calendar-sidebar">
+          <h3>{selectedDate.toLocaleDateString('pt-PT')}</h3>
+          <div className="sidebar-list">
+            {combinedEvents
+              .filter(e => e.date === selectedDate.toISOString().split('T')[0])
+              .map(event => (
+                <div key={event.id} className="mini-card" style={{ borderLeftColor: getUrgencyColor(event.urgency) }}>
+                  <strong>{event.title}</strong>
+                  {event.reason && <small>{event.reason}</small>}
+                  {event.time && <span>🕒 {event.time}</span>}
+                </div>
+              ))}
+            {combinedEvents.filter(e => e.date === selectedDate.toISOString().split('T')[0]).length === 0 && (
+              <p style={{ color: "#666", fontSize: "0.9rem" }}>Sem compromissos.</p>
+            )}
+          </div>
+          <button className="fab" onClick={() => setShowModal(true)}>+</button>
+        </div>
+
+        {showModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Novo Lembrete</h3>
+              <input 
+                type="text" 
+                placeholder="Título" 
+                value={newEvent.title} 
+                onChange={(e) => setNewEvent({...newEvent, title: e.target.value})} 
+              />
+              <select value={newEvent.urgency} onChange={(e) => setNewEvent({...newEvent, urgency: e.target.value})}>
+                <option value="baixa">Baixa Urgência</option>
+                <option value="media">Média Urgência</option>
+                <option value="alta">Alta Urgência</option>
+              </select>
+              <div className="modal-actions">
+                <button onClick={() => setShowModal(false)}>Cancelar</button>
+                <button onClick={handleAddEvent}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

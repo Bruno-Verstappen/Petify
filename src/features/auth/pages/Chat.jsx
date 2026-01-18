@@ -12,6 +12,7 @@ import {
   orderBy,
   Timestamp
 } from "firebase/firestore";
+import Header from "../../../layout/Header";
 
 const Chat = () => {
   const [chats, setChats] = useState([]); 
@@ -21,14 +22,13 @@ const Chat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollRef = useRef();
 
-  // 1. Monitorar a lista de chats (Coleção Raiz)
+  // 1. Monitorar a lista de chats
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "chats"), async (snapshot) => {
       const chatsData = await Promise.all(snapshot.docs.map(async (chatDoc) => {
         const data = chatDoc.data();
         let petName = "Pet";
         
-        // Busca o nome do pet se o ID existir
         if (data.petId) {
           try {
             const petDocRef = doc(db, "pets", data.petId);
@@ -44,7 +44,7 @@ const Chat = () => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Monitorar mensagens da subcoleção do chat ativo
+  // 2. Monitorar mensagens
   useEffect(() => {
     if (!activeChat) return;
 
@@ -66,7 +66,7 @@ const Chat = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 3. Enviar mensagem seguindo rigorosamente a lógica da sua função Kotlin
+  // 3. Enviar mensagem
   const handleSend = async (e) => {
     e.preventDefault();
     if (input.trim() === "" || !activeChat) return;
@@ -75,10 +75,9 @@ const Chat = () => {
       const now = Timestamp.now();
       const chatId = activeChat.id;
 
-      // O site age como a CLINICA, logo o senderId é o clinicId do chat
       const messageData = {
         chatId: chatId,
-        senderId: activeChat.clinicId, // Agora usa clinicId conforme a nova função
+        senderId: activeChat.clinicId, 
         receiverId: activeChat.userId,
         text: input,
         timestamp: now,
@@ -88,17 +87,14 @@ const Chat = () => {
       const chatUpdateData = {
         chatId: chatId,
         userId: activeChat.userId,
-        clinicId: activeChat.clinicId, // Mantém clinicId no cabeçalho
+        clinicId: activeChat.clinicId,
         lastMessage: input,
         updatedAt: now,
         userName: activeChat.userName || "Usuário",
         petId: activeChat.petId || ""
       };
 
-      // Grava na subcoleção de mensagens
       await addDoc(collection(db, "chats", chatId, "messages"), messageData);
-
-      // Atualiza o documento pai do chat (SetOptions.merge() no Kotlin = merge: true no JS)
       await setDoc(doc(db, "chats", chatId), chatUpdateData, { merge: true });
 
       setInput("");
@@ -119,71 +115,73 @@ const Chat = () => {
   };
 
   return (
-    <div className="app-container">
-      <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-        {isSidebarOpen ? "✕" : "☰"}
-      </button>
+    <div className="chat-page-wrapper">
+      <Header />
+      <div className="app-container">
+        <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+          {isSidebarOpen ? "✕" : "☰"}
+        </button>
 
-      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <h3>Painel da Clínica</h3>
-        </div>
-        <div className="chat-list">
-          {chats.map(chat => (
-            <div 
-              key={chat.id} 
-              className={`chat-item ${activeChat?.id === chat.id ? "active" : ""}`}
-              onClick={() => handleSelectChat(chat)}
-            >
-              <div className="chat-avatar">🐾</div>
-              <div className="chat-info">
-                <p className="chat-name">{chat.petName}</p>
-                <p className="chat-last-msg">Dono: {chat.userName}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <div className={`sidebar-overlay ${isSidebarOpen ? "visible" : ""}`} onClick={() => setIsSidebarOpen(false)}></div>
-
-      <main className="chat-container">
-        {activeChat ? (
-          <>
-            <header className="chat-header">
-              <h2>{activeChat.userName} <span style={{fontSize: '14px', opacity: 0.7}}>({activeChat.petName})</span></h2>
-            </header>
-            
-            <div className="messages-list">
-              {messages.map((msg) => (
-                <div 
-                  key={msg.id} 
-                  // Lógica de bolha: Se o senderId da mensagem for igual ao clinicId, a mensagem é da clínica (admin)
-                  className={`message-bubble ${msg.senderId === activeChat.clinicId ? 'message-admin' : 'message-client'}`}
-                >
-                  <p className="msg-content">{msg.text}</p>
-                  <span className="timestamp">{displayTime(msg.timestamp)}</span>
-                </div>
-              ))}
-              <div ref={scrollRef} />
-            </div>
-
-            <form className="chat-input-area" onSubmit={handleSend}>
-              <input 
-                className="chat-input"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Resposta da clínica..."
-              />
-              <button type="submit" className="send-button">➤</button>
-            </form>
-          </>
-        ) : (
-          <div className="no-chat-selected">
-            <p>Selecione um cliente para responder.</p>
+        <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
+          <div className="sidebar-header">
+            <h3>Painel da Clínica</h3>
           </div>
-        )}
-      </main>
+          <div className="chat-list">
+            {chats.map(chat => (
+              <div 
+                key={chat.id} 
+                className={`chat-item ${activeChat?.id === chat.id ? "active" : ""}`}
+                onClick={() => handleSelectChat(chat)}
+              >
+                <div className="chat-avatar">🐾</div>
+                <div className="chat-info">
+                  <p className="chat-name">{chat.petName}</p>
+                  <p className="chat-last-msg">Dono: {chat.userName}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <div className={`sidebar-overlay ${isSidebarOpen ? "visible" : ""}`} onClick={() => setIsSidebarOpen(false)}></div>
+
+        <main className="chat-container">
+          {activeChat ? (
+            <>
+              <header className="chat-header">
+                <h2>{activeChat.userName} <span style={{fontSize: '14px', opacity: 0.7}}>({activeChat.petName})</span></h2>
+              </header>
+              
+              <div className="messages-list">
+                {messages.map((msg) => (
+                  <div 
+                    key={msg.id} 
+                    className={`message-bubble ${msg.senderId === activeChat.clinicId ? 'message-admin' : 'message-client'}`}
+                  >
+                    <p className="msg-content">{msg.text}</p>
+                    <span className="timestamp">{displayTime(msg.timestamp)}</span>
+                  </div>
+                ))}
+                <div ref={scrollRef} />
+              </div>
+
+              <form className="chat-input-area" onSubmit={handleSend}>
+                <input 
+                  className="chat-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Resposta da clínica..."
+                />
+                <button type="submit" className="send-button">➤</button>
+              </form>
+            </>
+          ) : (
+            <div className="no-chat-selected">
+              <p>Selecione um cliente para responder.</p>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };

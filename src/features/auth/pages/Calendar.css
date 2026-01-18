@@ -1,8 +1,17 @@
-/* Layout Base */
+/* Container de nível superior para acomodar o Header */
+.calendar-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #121212;
+}
+
+/* Layout Base - Teu código original preservado */
 .calendar-container {
   display: flex;
   flex-direction: row;
-  height: 100vh;
+  flex: 1; /* Ocupa o resto da altura abaixo do header */
   background: #121212;
   color: #fff;
   overflow: hidden;
@@ -13,7 +22,7 @@
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  min-width: 0; /* Previne que o grid quebre o flexbox */
+  min-width: 0;
 }
 
 .calendar-nav {
@@ -85,7 +94,7 @@
   justify-content: center;
   transition: 0.2s;
   cursor: pointer;
-  min-height: 60px; /* Garante altura mínima em mobile */
+  min-height: 60px;
 }
 
 .calendar-day.selected { background: #715639; }
@@ -179,24 +188,24 @@
 }
 
 /* -----------------------------------------------------------
-   RESPONSIVIDADE (MEDIA QUERIES)
+   RESPONSIVIDADE (MEDIA QUERIES) - Teu código original preservado
    ----------------------------------------------------------- */
 
 @media (max-width: 900px) {
   .calendar-container {
-    flex-direction: column; /* Empilha verticalmente */
-    overflow-y: auto; /* Permite scroll na página inteira */
+    flex-direction: column;
+    overflow-y: auto;
     height: auto;
     min-height: 100vh;
   }
 
   .calendar-main {
     padding: 1rem;
-    flex: none; /* Deixa o calendário ocupar o espaço que precisa */
+    flex: none;
   }
 
   .calendar-wrapper {
-    max-height: none; /* Remove a limitação de altura do grid */
+    max-height: none;
   }
 
   .calendar-sidebar {
@@ -205,11 +214,11 @@
     border-top: 1px solid #222;
     padding: 1.5rem;
     min-height: 300px;
-    padding-bottom: 100px; /* Espaço para não cobrir o FAB */
+    padding-bottom: 100px;
   }
 
   .fab {
-    position: fixed; /* Fixa o botão no canto do ecrã */
+    position: fixed;
     bottom: 20px;
     right: 20px;
   }

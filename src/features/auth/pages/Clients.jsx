@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../config/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import Header from "../../../layout/Header"; 
 import './Clients.css';
 
 const Clients = () => {
@@ -20,7 +21,7 @@ const Clients = () => {
         ...doc.data()
       }));
 
-      // Filtragem local para evitar erro de Index do Firebase
+      // Filtra apenas utilizadores com role client
       const onlyClients = allUsers
         .filter(user => user.role === "client")
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
@@ -35,7 +36,6 @@ const Clients = () => {
     return () => unsubscribe();
   }, []);
 
-  // Lógica de filtragem atualizada para Nome, Email e Telefone
   const filteredClients = clients.filter(client => {
     const term = searchTerm.toLowerCase();
     return (
@@ -46,74 +46,69 @@ const Clients = () => {
   });
 
   return (
-    <div className="clients-page-container">
-      <div className="clients-header">
-        <div className="title-section">
-          <h1>Lista de Clientes</h1>
-          <p className="subtitle">Gerencie os {clients.length} donos de pets cadastrados</p>
-        </div>
-        <button className="btn-back" onClick={() => navigate('/home')}>
-          Voltar para Home
-        </button>
-      </div>
-
-      <div className="search-section">
-        <input 
-          type="text" 
-          placeholder="Pesquisar por nome, email ou telemóvel..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-bar"
-        />
-      </div>
-
-      <div className="table-container">
-        {loading ? (
-          <div className="status-msg">A carregar dados dos clientes...</div>
-        ) : (
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>E-mail</th>
-                  <th>Telefone</th>
-                  <th style={{ textAlign: 'center' }}>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClients.map((client) => (
-                  <tr key={client.id} className="table-row">
-                    <td className="name-cell">
-                      <div className="avatar-circle">
-                        {client.profileImageUrl ? (
-                          <img src={client.profileImageUrl} alt="perfil" />
-                        ) : (
-                          client.name?.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <span className="name-text">{client.name || 'Sem nome'}</span>
-                    </td>
-                    <td className="email-text">{client.email}</td>
-                    <td className="phone-text">{client.phone || 'N/A'}</td>
-                    <td className="actions-cell">
-                      <button 
-                        className="btn-view-pets"
-                        onClick={() => navigate(`/clients/${client.id}/pets`)}
-                      >
-                        Ver Pets
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="clients-page-main-wrapper">
+      {/* O Header fica colado ao topo do wrapper sem interferências */}
+      <Header />
+      
+      <div className="clients-scrollable-content">
+        <div className="clients-header-bar">
+          <div className="title-area">
+            <h1>Lista de Clientes</h1>
+            <p className="subtitle">Gerencie os {clients.length} donos de pets cadastrados</p>
           </div>
-        )}
+        </div>
 
-        {!loading && filteredClients.length === 0 && (
-          <div className="status-msg">Nenhum cliente encontrado.</div>
-        )}
+        <div className="search-container">
+          <input 
+            type="text" 
+            placeholder="Pesquisar por nome, email ou telemóvel..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input-field"
+          />
+        </div>
+
+        <div className="clients-table-container">
+          {loading ? (
+            <div className="loading-state">A carregar dados...</div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="clients-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th style={{ textAlign: 'center' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map((client) => (
+                    <tr key={client.id}>
+                      <td className="client-info">
+                        <div className="avatar">
+                          {client.profileImageUrl ? (
+                            <img src={client.profileImageUrl} alt="perfil" />
+                          ) : (
+                            client.name?.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <span>{client.name || 'Sem nome'}</span>
+                      </td>
+                      <td>{client.email}</td>
+                      <td>{client.phone || 'N/A'}</td>
+                      <td className="actions">
+                        <button onClick={() => navigate(`/clients/${client.id}/pets`)}>
+                          Ver Pets
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

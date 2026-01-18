@@ -1,14 +1,24 @@
-.app-container {
+/* Wrapper para conter o Header + Conteúdo do Chat */
+.chat-page-wrapper {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
+    background-color: #1a1a1a;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex: 1; /* Ocupa o resto da altura abaixo do Header */
+    width: 100%;
     background-color: #1a1a1a;
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
 }
 
-/* --- SIDEBAR (Desktop: Sempre visível) --- */
+/* --- SIDEBAR --- */
 .sidebar {
     width: 320px;
     min-width: 320px;
@@ -51,7 +61,7 @@
     display: flex; 
     flex-direction: column; 
     background-color: #1a1a1a;
-    min-width: 0; /* Previne que o flexbox quebre */
+    min-width: 0;
 }
 
 .chat-header { 
@@ -98,9 +108,10 @@
 
 /* --- CONTROLES MOBILE --- */
 .mobile-menu-btn {
-    display: none; /* Escondido no PC */
+    display: none;
     position: fixed;
-    top: 15px; left: 15px;
+    top: 80px; /* Ajustado para ficar abaixo do Header no mobile */
+    left: 15px;
     z-index: 100;
     background-color: #715639;
     color: white;
@@ -110,7 +121,7 @@
 }
 
 .sidebar-overlay {
-    display: none; /* Escondido no PC */
+    display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.6);
@@ -120,7 +131,7 @@
     pointer-events: none;
 }
 
-/* --- RESPONSIVIDADE (TELEMÓVEL) --- */
+/* --- RESPONSIVIDADE --- */
 @media (max-width: 768px) {
     .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
     
@@ -129,12 +140,12 @@
         left: 0; top: 0; bottom: 0;
         width: 280px;
         min-width: 280px;
-        transform: translateX(-100%); /* Esconde por padrão no mobile */
+        transform: translateX(-100%);
         transition: transform 0.3s ease;
     }
 
     .sidebar.open {
-        transform: translateX(0); /* Mostra quando o estado é true */
+        transform: translateX(0);
     }
 
     .sidebar-overlay.visible {
@@ -144,7 +155,7 @@
     }
 
     .chat-header {
-        padding-left: 70px; /* Espaço para o botão hambúrguer no mobile */
+        padding-left: 70px;
     }
 
     .messages-list { padding: 15px; }

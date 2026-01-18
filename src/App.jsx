@@ -16,6 +16,7 @@ import AdoptionDetail from './features/auth/pages/AdoptionDetail.jsx';
 import AddVaccine from './features/auth/pages/AddVaccine.jsx';
 import PetList from './features/auth/pages/PetList.jsx';
 import Settings from './features/auth/pages/Settings.jsx';
+import Header from './layout/Header.jsx';
 function App() {
   return (
     <Routes>
@@ -31,7 +32,7 @@ function App() {
       <Route path="/RegisterFuncionario1" element={<RegisterFuncionario1 />} />
       <Route path="/RegisterFuncionario2" element={<RegisterFuncionario2 />} />
       
-
+<Route path="/header" element={<Header />} />
       <Route path="/home" element={<Home />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/calendar" element={<Calendar />} />
