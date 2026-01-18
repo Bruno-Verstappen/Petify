@@ -44,8 +44,15 @@ const Home = () => {
       if (data.petId && typeof data.petId === 'string') {
         const petSnap = await getDoc(doc(db, "pets", data.petId));
         if (petSnap.exists()) {
-          petInfo.name = petSnap.data().name;
-          petInfo.img = petSnap.data().imageUrl || petInfo.img;
+          const petData = petSnap.data();
+          petInfo.name = petData.name;
+          
+          // LÓGICA DE IMAGEM SINCRONIZADA (Igual ao Pets.jsx e Mobile)
+          petInfo.img = 
+            petData.displayImage || 
+            (petData.images && petData.images.length > 0 ? petData.images[0] : null) || 
+            petData.imageUrl || 
+            petInfo.img;
         }
       }
       if (data.userId && !data.userName) {
@@ -106,7 +113,7 @@ const Home = () => {
               setLoading(false);
             });
 
-            // 3. Chats Recentes (Ordenação por updatedAt)
+            // 3. Chats Recentes
             const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
             unsubChats = onSnapshot(qChats, async (snap) => {
               const chatData = await Promise.all(snap.docs.map(d => getPetAndOwnerData({ id: d.id, ...d.data() })));
@@ -130,7 +137,6 @@ const Home = () => {
 
   return (
     <div className="petify-container">
-      {/* MENU HAMBURGUER COMPLETO RESTAURADO */}
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-items">
           <div className="menu-item" onClick={() => {navigate('/home'); toggleMenu();}}>Home</div>
@@ -224,7 +230,7 @@ const Home = () => {
             <div className="chat-list-bg" onClick={() => navigate('/chat')} style={{cursor: 'pointer', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', padding: '10px'}}>
               {recentChats.length > 0 ? recentChats.slice(0, 3).map(chat => (
                 <div key={chat.id} className="chat-row-item">
-                  <img src={chat.petImg} alt="pet" style={{width: '40px', height: '40px', borderRadius: '50%', marginRight: '15px'}} />
+                  <img src={chat.petImg} alt="pet" style={{width: '40px', height: '40px', borderRadius: '50%', marginRight: '15px', objectFit: 'cover'}} />
                   <div className="chat-content-text">
                     <strong style={{color: 'white'}}>{chat.petName} ({chat.ownerName})</strong>
                     <p style={{fontSize: '14px', color: '#bbb', margin: 0}}>{chat.lastMessage}</p>

@@ -76,40 +76,54 @@ const Pets = () => {
         {loading ? (
           <div className="status-msg">A carregar pets...</div>
         ) : (
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Pet</th>
-                <th>Espécie / Raça</th>
-                <th>Idade / Peso</th>
-                <th style={{ textAlign: 'center' }}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pets.map((pet) => (
-                <tr key={pet.id} className="table-row">
-                  <td className="name-cell">
-                    <div className="avatar-circle">
-                      {pet.imageUrl ? <img src={pet.imageUrl} alt="pet" /> : '🐾'}
-                    </div>
-                    <span className="name-text">{pet.name}</span>
-                  </td>
-                  <td className="email-text">
-                    {pet.especie || pet.species || 'N/A'} - {pet.raca || pet.breed || 'N/A'}
-                  </td>
-                  <td className="phone-text">
-                    {pet.age} • {pet.weight}kg
-                  </td>
-                  <td className="actions-cell">
-                    <div className="actions-group">
-                      <button className="btn-action-history" onClick={() => openHistory(pet, 'consultas')}>Consultas</button>
-                      <button className="btn-action-vaccine" onClick={() => openHistory(pet, 'vacinas')}>Vacinas</button>
-                    </div>
-                  </td>
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Pet</th>
+                  <th>Espécie / Raça</th>
+                  <th>Idade / Peso</th>
+                  <th style={{ textAlign: 'center' }}>Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pets.map((pet) => {
+                  // LÓGICA DE IMAGEM CORRIGIDA PARA O ARRAY DO FIRESTORE
+                  const petImgUrl = 
+                    pet.displayImage || 
+                    (pet.images && pet.images.length > 0 ? pet.images[0] : null) || 
+                    pet.imageUrl;
+
+                  return (
+                    <tr key={pet.id} className="table-row">
+                      <td className="name-cell">
+                        <div className="avatar-circle">
+                          {petImgUrl ? (
+                            <img src={petImgUrl} alt={pet.name} />
+                          ) : (
+                            <span style={{ fontSize: '20px' }}>🐾</span>
+                          )}
+                        </div>
+                        <span className="name-text">{pet.name}</span>
+                      </td>
+                      <td className="email-text">
+                        {pet.species || pet.especie || 'N/A'} - {pet.breed || pet.raca || 'N/A'}
+                      </td>
+                      <td className="phone-text">
+                        {pet.age} • {pet.weight}kg
+                      </td>
+                      <td className="actions-cell">
+                        <div className="actions-group">
+                          <button className="btn-action-history" onClick={() => openHistory(pet, 'consultas')}>Consultas</button>
+                          <button className="btn-action-vaccine" onClick={() => openHistory(pet, 'vacinas')}>Vacinas</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -122,7 +136,6 @@ const Pets = () => {
             </div>
             
             <div className="modal-body">
-              {/* NOVO CABEÇALHO DO HISTÓRICO COM BOTÃO DE ADICIONAR */}
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -146,38 +159,40 @@ const Pets = () => {
               </div>
 
               {historyData.length > 0 ? (
-                <table className="history-table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>{activeModal === 'consultas' ? 'Motivo' : 'Vacina'}</th>
-                      <th>{activeModal === 'consultas' ? 'Status' : 'Lote / Vet'}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyData.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.date || item.dateAdministered}</td>
-                        <td>
-                          <strong>{item.reason || item.name}</strong>
-                          {item.imageUrl && <span className="img-indicator"> 📷</span>}
-                        </td>
-                        <td>
-                          {activeModal === 'consultas' ? (
-                            <span className={`status-tag ${item.status || 'concluido'}`}>
-                              {item.status || 'Concluído'}
-                            </span>
-                          ) : (
-                            <div className="vaccine-info">
-                              <span className="status-tag batch">{item.batchNumber || 'Sem Lote'}</span>
-                              <small>{item.vetName}</small>
-                            </div>
-                          )}
-                        </td>
+                <div className="table-responsive">
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>{activeModal === 'consultas' ? 'Motivo' : 'Vacina'}</th>
+                        <th>{activeModal === 'consultas' ? 'Status' : 'Lote / Vet'}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {historyData.map(item => (
+                        <tr key={item.id}>
+                          <td>{item.date || item.dateAdministered}</td>
+                          <td>
+                            <strong>{item.reason || item.name}</strong>
+                            {item.imageUrl && <span className="img-indicator"> 📷</span>}
+                          </td>
+                          <td>
+                            {activeModal === 'consultas' ? (
+                              <span className={`status-tag ${item.status || 'concluido'}`}>
+                                {item.status || 'Concluído'}
+                              </span>
+                            ) : (
+                              <div className="vaccine-info">
+                                <span className="status-tag batch">{item.batchNumber || 'Sem Lote'}</span>
+                                <small>{item.vetName}</small>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <p className="no-data">Nenhum registo encontrado.</p>
               )}

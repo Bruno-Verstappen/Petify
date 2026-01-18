@@ -74,7 +74,7 @@
   height: calc(100vh - 120px); 
 }
 
-/* SIDEBAR - Com Scroll Restaurado */
+/* SIDEBAR */
 .medical-sidebar { 
   background: #9c9c9c; 
   border-radius: 0 0 0 20px; 
@@ -118,7 +118,7 @@
 .pet-avatar-large { width: 65px; height: 65px; border-radius: 8px; object-fit: cover; }
 .pet-name-label-large { font-weight: bold; font-size: 18px; margin-top: 6px; }
 
-/* DASHBOARD E ANALYTICS - Estilo Original 220px */
+/* DASHBOARD */
 .dashboard-content { 
   background: linear-gradient(to bottom, #bd9368, #4e4034); 
   padding: 25px; 
@@ -149,10 +149,10 @@
 .btn-accept-mini { background: #2e7d32; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; margin-right: 5px;}
 .btn-refuse-mini { background: #c62828; color: white; border: none; padding: 6px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-/* CHAT - Fundo Escuro Pedido */
+/* CHAT */
 .dark-chat { background: #121212 !important; }
 .chat-list-bg { border-radius: 12px; }
 .chat-row-item { display: flex; padding: 15px; border-bottom: 1px solid #333; color: white; align-items: center; }
-.chat-row-item img { width: 50px; height: 50px; border-radius: 8px; margin-right: 15px; }
+.chat-row-item img { width: 50px; height: 50px; border-radius: 8px; margin-right: 15px; object-fit: cover; }
 
 .loading-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #1a1a1a; color: white; font-size: 3rem; }

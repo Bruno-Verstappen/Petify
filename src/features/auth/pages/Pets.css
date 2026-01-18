@@ -40,6 +40,13 @@
   background: #8b6b47;
 }
 
+/* Scroll Lateral */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Tabela Principal */
 .table-container {
   background: #1e1e1e;
@@ -51,6 +58,7 @@
 .custom-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Garante que o scroll apareça em telas pequenas */
 }
 
 .custom-table th {
@@ -181,6 +189,7 @@
 .history-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 450px;
 }
 
 .history-table th {
@@ -241,38 +250,36 @@
   color: #c5935f;
 }
 
-/* --- NOVOS ESTILOS ADICIONADOS --- */
-
 .btn-add-new {
-    background: #c5935f;
-    color: #000;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 12px;
-    cursor: pointer;
-    transition: 0.3s;
+  background: #c5935f;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
 .btn-add-new:hover {
-    background: #fff;
+  background: #fff;
 }
 
 .add-vaccine-form-vertical label {
-    display: block;
-    font-size: 12px;
-    color: #c5935f;
-    margin-bottom: 5px;
-    font-weight: 600;
+  display: block;
+  font-size: 12px;
+  color: #c5935f;
+  margin-bottom: 5px;
+  font-weight: 600;
 }
 
 .add-vaccine-form-vertical input {
-    width: 100%;
-    background: #121212;
-    border: 1px solid #333;
-    padding: 12px;
-    border-radius: 8px;
-    color: white;
-    margin-bottom: 15px; /* Ajustado para melhor espaçamento vertical */
+  width: 100%;
+  background: #121212;
+  border: 1px solid #333;
+  padding: 12px;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 15px;
 }

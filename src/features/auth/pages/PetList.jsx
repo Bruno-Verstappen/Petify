@@ -24,6 +24,7 @@ const PetList = () => {
     try {
       setLoading(true);
       const petsRef = collection(db, "pets");
+      // Filtra pets sem dono
       const q = query(petsRef, where("ownerId", "==", ""));
       const snapshot = await getDocs(q);
       const petsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -44,10 +45,8 @@ const PetList = () => {
 
   // --- FUNÇÃO DO MENU ---
   const toggleMenu = (e) => {
-    // Impede que o clique passe para a div de baixo (que fecha o menu)
     e.preventDefault();
     e.stopPropagation(); 
-    console.log("Menu clicado! Novo estado:", !menuOpen); // Ver na consola
     setMenuOpen(prev => !prev);
   };
 
@@ -78,7 +77,6 @@ const PetList = () => {
     <div className="pets-list-container" onClick={() => setMenuOpen(false)}>
       
       {/* HEADER */}
-      {/* STYLE INLINE: zIndex alto e overflow visible para nada cortar o menu */}
       <header className="dash-header" style={{ zIndex: 1000, overflow: 'visible', position: 'relative' }}>
         <h1 className="logo-text">Petify <span className="sub-logo">Center Admin</span></h1>
         
@@ -89,15 +87,13 @@ const PetList = () => {
           <div 
             onClick={toggleMenu}
             style={{ 
-                position: 'relative', // Essencial para o menu absoluto funcionar
+                position: 'relative', 
                 cursor: 'pointer',
                 padding: '5px',
                 zIndex: 2000,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
-                // Se quiseres ver onde é a área de clique, descomenta a linha abaixo:
-                // border: '1px solid red' 
             }}
           >
             <img 
@@ -106,30 +102,29 @@ const PetList = () => {
               style={{ width: '35px', height: 'auto', filter: 'invert(1)', display: 'block' }}
             />
             
-            {/* --- O MENU DROPDOWN (ESTILOS FORÇADOS) --- */}
+            {/* --- O MENU DROPDOWN --- */}
             {menuOpen && (
               <div 
-                onClick={(e) => e.stopPropagation()} // Clicar dentro não fecha
+                onClick={(e) => e.stopPropagation()} 
                 style={{
                     position: 'absolute',
                     top: '100%', 
                     right: 0,
                     marginTop: '10px',
-                    backgroundColor: '#222', // Fundo ESCURO forçado
+                    backgroundColor: '#222', 
                     border: '1px solid #555',
                     borderRadius: '8px',
                     width: '150px',
                     boxShadow: '0 5px 15px rgba(0,0,0,0.8)',
-                    zIndex: 9999, // Z-index máximo
+                    zIndex: 9999, 
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden'
                 }}
               >
-                {/* ITENS DO MENU COM TEXTO BRANCO FORÇADO */}
                 <div 
                     onClick={() => handleNavigate('/home-centro')}
-                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center' }}
+                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center', cursor: 'pointer' }}
                     onMouseOver={(e) => e.target.style.background = '#444'}
                     onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
@@ -138,16 +133,17 @@ const PetList = () => {
 
                 <div 
                     onClick={() => handleNavigate('/pet-list')}
-                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center' }}
+                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center', cursor: 'pointer' }}
                     onMouseOver={(e) => e.target.style.background = '#444'}
                     onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
                     Pets
                 </div>
 
+                {/* 👇 AQUI ESTAVA O ERRO. AGORA ESTÁ CORRIGIDO: */}
                 <div 
-                    onClick={() => { setMenuOpen(false); alert("Settings em breve..."); }}
-                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center' }}
+                    onClick={() => handleNavigate('/settings')}
+                    style={{ padding: '12px', color: 'white', borderBottom: '1px solid #444', textAlign: 'center', cursor: 'pointer' }}
                     onMouseOver={(e) => e.target.style.background = '#444'}
                     onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
@@ -156,7 +152,7 @@ const PetList = () => {
 
                 <div 
                     onClick={handleLogout}
-                    style={{ padding: '12px', color: '#ff6b6b', fontWeight: 'bold', textAlign: 'center' }}
+                    style={{ padding: '12px', color: '#ff6b6b', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
                     onMouseOver={(e) => e.target.style.background = '#444'}
                     onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
@@ -200,7 +196,7 @@ const PetList = () => {
         <div className="big-empty-space"></div>
       </div>
 
-      {/* POPUP (Mantive igual) */}
+      {/* POPUP */}
       {selectedPet && (
         <div className="modal-overlay" onClick={closePopup}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>

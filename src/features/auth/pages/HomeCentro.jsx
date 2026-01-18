@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../config/firebase'; 
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore'; // <--- ADICIONEI getDoc
 import './HomeCentro.css';
+
 import menuIcon from '../../../assets/images/Hamburger_menu.png'; 
 
 const HomeCentro = () => {
@@ -10,6 +11,7 @@ const HomeCentro = () => {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Estados dos Dados
   const [stats, setStats] = useState({ totalPets: 0, adoptions: 0, pending: 0, urgent: 0 });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [interviewRequests, setInterviewRequests] = useState([]);
@@ -17,67 +19,90 @@ const HomeCentro = () => {
   const [petsInCenter, setPetsInCenter] = useState([]);
   const [interviewDates, setInterviewDates] = useState({});
 
-  const formatDateTime = (dateOnly) => {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${dateOnly} ${hours}:${minutes}`;
-  };
-
+  // --- BUSCAR DADOS ---
   const fetchData = async () => {
     try {
       setLoading(true);
-      const user = auth.currentUser;
-      if (!user) return;
-      const currentCenterId = user.uid;
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+          setLoading(false);
+          return;
+      }
 
-      const petsSnapshot = await getDocs(collection(db, "pets"));
+      // 1. DESCOBRIR QUAL ID DE CENTRO USAR
+      // Vamos buscar o perfil do utilizador logado para ver se ele tem um chefe (clinicId)
+      let targetCenterId = currentUser.uid; // Por defeito, assume que é o próprio (Admin)
+
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (userSnap.exists()) {
+          const userData = userSnap.data();
+          // Se tiver clinicId, significa que é funcionário, então usamos o ID do chefe!
+          if (userData.clinicId && userData.clinicId.trim() !== "") {
+              targetCenterId = userData.clinicId;
+              console.log("Funcionário detetado. A carregar dados do centro:", targetCenterId);
+          }
+      }
+
+      // 2. BUSCAR ANIMAIS (Usando o targetCenterId)
+      const petsRef = collection(db, "pets");
+      const petsSnapshot = await getDocs(petsRef);
+      
       let total = 0;
       let sickCount = 0;
-      let adoptionsCount = 0;
       let availablePets = [];
 
-      petsSnapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const centerId = data.vcId || data.adoptionCenterId;
+      petsSnapshot.forEach(doc => {
+        const data = doc.data();
+        
+        // Verifica se o animal pertence a este centro
+        const petCenterId = data.adoptionCenterId || data.vcId;
 
-        if (centerId === currentCenterId) {
-          if (data.status === 'owned' || data.status === 'adopted') {
-            adoptionsCount++;
-          } else {
+        if (petCenterId === targetCenterId && (!data.ownerId || data.ownerId === "") && data.status !== 'adopted') { 
             total++;
             if (data.status === 'sick' || data.status === 'medical') sickCount++;
-            availablePets.push({ id: docSnap.id, ...data });
-          }
+            availablePets.push({ id: doc.id, ...data });
         }
       });
 
-      const reqSnapshot = await getDocs(collection(db, "adoption_requests"));
+      // 3. BUSCAR PEDIDOS DE ADOÇÃO (Usando o targetCenterId)
+      const reqRef = collection(db, "adoption_requests");
+      const reqSnapshot = await getDocs(reqRef); 
+      
       let pending = [];
       let interviews = [];
       let history = [];
+      let acceptedCount = 0;
 
-      reqSnapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const item = { id: docSnap.id, ...data };
-        const centerId = data.adoptionCenterId || data.vcId;
-        if (centerId !== currentCenterId && centerId !== "") return;
+      reqSnapshot.forEach(doc => {
+        const data = doc.data();
+        const item = { id: doc.id, ...data };
 
-        const rStatus = (data.requestStatus || "").toLowerCase();
-        const fStatus = (data.status || "").toLowerCase();
+        // Verifica se o pedido pertence a este centro
+        const requestCenterId = data.adoptionCenterId || data.vcId;
 
-        if (fStatus === 'accepted' || fStatus === 'rejected' || fStatus === 'approved') {
-          history.push(item);
-        } else if (rStatus === 'interview' || rStatus === 'entrevista' || rStatus === 'agendada') {
-          interviews.push(item);
+        if (requestCenterId !== targetCenterId) return;
+
+        const reqStatus = (data.requestStatus || "").toLowerCase().trim();
+        const finalStatus = (data.status || "").toLowerCase().trim();
+
+        if (finalStatus === 'accepted' || finalStatus === 'rejected' || finalStatus === 'approved') {
+            history.push(item);
+            if (finalStatus === 'accepted' || finalStatus === 'approved') acceptedCount++;
         } else {
-          pending.push(item);
+            if (reqStatus === 'pendente' || reqStatus === 'pending') {
+                pending.push(item);
+            } else if (reqStatus === 'interview' || reqStatus === 'entrevista') {
+                interviews.push(item);
+            }
         }
       });
 
       setStats({
         totalPets: total,
-        adoptions: adoptionsCount,
+        adoptions: acceptedCount,
         pending: pending.length + interviews.length,
         urgent: sickCount
       });
@@ -87,97 +112,71 @@ const HomeCentro = () => {
       setHistoryRequests(history);
       setPetsInCenter(availablePets);
 
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-    } finally {
-      setLoading(false);
+    } catch (error) { 
+        console.error("Erro:", error); 
+    } finally { 
+        setLoading(false); 
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) fetchData();
-      else navigate('/login');
-    });
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
+  // AÇÕES
   const handleScheduleInterview = async (reqId) => {
-    const dateInput = interviewDates[reqId];
-    if (!dateInput) { alert("Selecione uma data."); return; }
-    const finalFormattedDate = formatDateTime(dateInput);
+    const date = interviewDates[reqId];
+    if (!date) { alert("Selecione uma data."); return; }
     try {
-      await updateDoc(doc(db, "adoption_requests", reqId), {
-        requestStatus: 'interview',
-        interviewDate: finalFormattedDate 
-      });
-      alert("Entrevista marcada para: " + finalFormattedDate);
-      fetchData(); 
-    } catch (error) { console.error(error); }
-  };
-
-  const handleRejectRequest = async (reqId) => {
-    if(!window.confirm("Deseja recusar este pedido?")) return;
-    try {
-      await updateDoc(doc(db, "adoption_requests", reqId), {
-        status: 'rejected',
-        requestStatus: 'concluido'
-      });
-      fetchData();
+        await updateDoc(doc(db, "adoption_requests", reqId), { requestStatus: 'interview', interviewDate: date });
+        alert("Entrevista marcada!"); fetchData(); 
     } catch (error) { console.error(error); }
   };
 
   const handleFinalDecision = async (req, decision) => {
-    if(!window.confirm("Confirmar decisão?")) return;
+    if(!window.confirm(decision === 'accepted' ? "Aceitar?" : "Recusar?")) return;
     try {
-      await updateDoc(doc(db, "adoption_requests", req.id), {
-        status: decision,
-        requestStatus: 'concluido'
-      });
-      if (decision === 'accepted') {
-        await updateDoc(doc(db, "pets", req.petId), {
-          status: 'owned',
-          ownerId: req.userId,
-          active: "false"
-        });
+      await updateDoc(doc(db, "adoption_requests", req.id), { status: decision, requestStatus: 'concluido' });
+      if (decision === 'accepted' && req.petId) {
+          const newOwnerId = req.userId || req.formData?.uid || "adopted_unknown";
+          await updateDoc(doc(db, "pets", req.petId), { status: 'adopted', ownerId: newOwnerId, active: "false" });
       }
-      fetchData(); 
+      alert("Sucesso!"); fetchData(); 
     } catch (error) { console.error(error); }
   };
 
+  const onDateChange = (id, value) => setInterviewDates(prev => ({ ...prev, [id]: value }));
+  
   const isInterviewPassed = (dateString) => {
     if (!dateString) return false;
-    const interviewDate = new Date(dateString.replace(' ', 'T')); 
-    const now = new Date();
-    return now >= interviewDate; 
+    const interviewDate = new Date(dateString);
+    const today = new Date(); today.setHours(0,0,0,0);
+    return today > interviewDate; 
   };
 
-  if (loading) return <div className="loading-screen">Carregando Painel...</div>;
+  // NAVEGAÇÃO
+  const handleLogout = () => { auth.signOut(); navigate('/login'); };
+  const handleNavigate = (path) => { setMenuOpen(false); if (path) navigate(path); };
+  
+  const toggleMenu = (e) => {
+      e.stopPropagation(); 
+      setMenuOpen(!menuOpen);
+  };
 
   return (
-    /* REMOVIDO: onClick de fecho global para garantir que o menu não fecha sozinho ao abrir */
-    <div className="dashboard-container">
+    <div className="dashboard-container" onClick={() => setMenuOpen(false)}>
       <header className="dash-header">
         <h1 className="logo-text">Petify <span className="sub-logo">Center Admin</span></h1>
         <div className="header-actions">
           <input type="text" placeholder="Search..." className="search-bar" />
+          
           <div className="menu-container">
-            <img 
-              src={menuIcon} 
-              alt="Menu" 
-              className="hamburger-icon" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation(); // CRÍTICO: Impede que o clique se perca
-                setMenuOpen(!menuOpen);
-                console.log("Menu state:", !menuOpen); // Para debug no teu browser
-              }} 
-            />
+            <img src={menuIcon} alt="Menu" className="hamburger-icon" onClick={toggleMenu} />
+            
             {menuOpen && (
               <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                <div className="menu-item" onClick={() => { navigate('/home-centro'); setMenuOpen(false); }}>Home</div>
-                <div className="menu-item" onClick={() => { navigate('/pet-list'); setMenuOpen(false); }}>Pets</div>
-                <div className="menu-item logout" onClick={() => { auth.signOut(); setMenuOpen(false); }}>Logout</div>
+                <div className="menu-item" onClick={() => handleNavigate('/home-centro')}>Home</div>
+                <div className="menu-item" onClick={() => handleNavigate('/pet-list')}>Pets</div>
+                <div className="menu-item" onClick={() => handleNavigate('/settings')}>Settings</div>
+                <div className="menu-item logout" onClick={handleLogout}>Logout</div>
               </div>
             )}
           </div>
@@ -195,9 +194,11 @@ const HomeCentro = () => {
                   <div className={`status-dot ${req.status === 'accepted' ? 'green' : 'red'}`}></div>
                 </div>
                 <p><strong>Pet:</strong> {req.petName}</p>
-                <p><strong>User:</strong> {req.formData?.fullName || "Usuário"}</p>
+                <p><strong>User:</strong> {req.formData?.fullName}</p>
+                <p className="date-text">Status: {req.status}</p>
               </div>
             ))}
+            {historyRequests.length === 0 && <p className="empty-msg">Sem histórico.</p>}
           </div>
         </aside>
 
@@ -217,48 +218,61 @@ const HomeCentro = () => {
                   <img src={req.petImageUrl || "https://placehold.co/80"} alt="pet" className="pet-img-medium" />
                   <div className="pending-info">
                     <h4>{req.petName}</h4>
-                    <p className="candidate-name">User: {req.formData?.fullName || "Pendente"}</p>
-                    <div className="date-action-row">
-                      <input type="date" className="date-input" onChange={(e) => setInterviewDates({...interviewDates, [req.id]: e.target.value})} />
-                      <button className="btn-schedule" onClick={() => handleScheduleInterview(req.id)}>Marcar</button>
-                      <button className="btn-refuse-pending" onClick={() => handleRejectRequest(req.id)}>Recusar</button>
+                    <p className="candidate-name">User: {req.formData?.fullName}</p>
+                    <p className="motivation-text">Status: {req.requestStatus}</p>
+                    <div className="interview-scheduler">
+                        <label>Marcar Entrevista:</label>
+                        <div className="date-action-row">
+                            <input type="date" className="date-input" onChange={(e) => onDateChange(req.id, e.target.value)} />
+                            <button className="btn-schedule" onClick={() => handleScheduleInterview(req.id)}>Marcar</button>
+                        </div>
                     </div>
                   </div>
                 </div>
               ))}
+              {pendingRequests.length === 0 && <p className="empty-msg">Sem novos pedidos.</p>}
             </div>
           </section>
 
           <section className="section-block">
             <h3>Scheduled Interviews</h3>
             <div className="horizontal-scroll-list">
-              {interviewRequests.map(req => (
-                <div key={req.id} className="pending-card interview-card-border">
-                  <img src={req.petImageUrl || "https://placehold.co/80"} alt="pet" className="pet-img-medium" />
-                  <div className="pending-info">
-                    <h4>{req.petName}</h4>
-                    <p className="candidate-name">User: {req.formData?.fullName}</p>
-                    {!isInterviewPassed(req.interviewDate) ? (
-                      <div className="interview-status">
-                        <p className="status-label scheduled">Agendada</p>
-                        <p className="interview-date-display">📅 {req.interviewDate}</p>
+              {interviewRequests.map(req => {
+                 const canDecide = isInterviewPassed(req.interviewDate);
+                 return (
+                    <div key={req.id} className="pending-card interview-card-border">
+                      <img src={req.petImageUrl || "https://placehold.co/80"} alt="pet" className="pet-img-medium" />
+                      <div className="pending-info">
+                        <h4>{req.petName}</h4>
+                        <p className="candidate-name">User: {req.formData?.fullName}</p>
+                        {!canDecide ? (
+                            <div className="interview-status">
+                                <p className="status-label scheduled">Agendada</p>
+                                <p className="interview-date-display">📅 {req.interviewDate}</p>
+                                <p className="wait-text">A aguardar data...</p>
+                            </div>
+                        ) : (
+                            <div className="final-decision-box">
+                                <p className="status-label action">Decisão Necessária</p>
+                                <p className="info-text">Data ({req.interviewDate}) passou.</p>
+                                <div className="action-buttons">
+                                  <button className="btn-accept" onClick={() => handleFinalDecision(req, 'accepted')}>Aceitar</button>
+                                  <button className="btn-refuse" onClick={() => handleFinalDecision(req, 'rejected')}>Recusar</button>
+                                </div>
+                            </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="action-buttons">
-                        <button className="btn-accept" onClick={() => handleFinalDecision(req, 'accepted')}>Aceitar</button>
-                        <button className="btn-refuse" onClick={() => handleFinalDecision(req, 'rejected')}>Recusar</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                 );
+              })}
+              {interviewRequests.length === 0 && <p className="empty-msg">Sem entrevistas marcadas.</p>}
             </div>
           </section>
 
           <section className="section-block">
             <div className="section-header">
-              <h3>Pets in Center</h3>
-              <button className="btn-add-pet" onClick={() => navigate('/add-pet')}>+ Add Pet</button>
+                <h3>Pets in Center</h3>
+                <button className="btn-add-pet" onClick={() => navigate('/add-pet')}>+ Add Pet</button>
             </div>
             <div className="pets-list-container">
               {petsInCenter.map(pet => (
@@ -266,7 +280,10 @@ const HomeCentro = () => {
                   <img src={pet.imageUrl || "https://placehold.co/40"} alt="pet" className="avatar-tiny" />
                   <div className="pet-details">
                     <span className="pet-name">{pet.name} ({pet.species})</span>
-                    <span className="pet-sub">Age: {pet.age} | Chip: {pet.microchip}</span>
+                    <span className="pet-sub">Age: {pet.age} | Chip: {pet.microchip || "N/A"}</span>
+                  </div>
+                  <div className="pet-status">
+                     {pet.status === 'sick' ? <span className="tag red">Medical</span> : <span className="tag green">Available</span>}
                   </div>
                 </div>
               ))}

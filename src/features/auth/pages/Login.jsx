@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../../../config/firebase'; // <--- IMPORTANTE: Importar também a 'db'
+import { auth, db } from '../../../config/firebase'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // <--- NOVOS IMPORTS para ler a BD
+import { doc, getDoc } from 'firebase/firestore'; 
 import "./Login.css";
-import pataImg from "../../../assets/images/pata_password.png";
+import pataImg from "../../../assets/images/pata_password.png"; // Confirma se o caminho está certo
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,37 +18,69 @@ const Login = () => {
     setError('');
 
     try {
-      // 1. Autenticação (Verifica se email/pass estão certos)
+      // 1. Autenticação
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Buscar os dados do utilizador à Base de Dados (Firestore)
-      // Queremos saber se é "centro de adoção" ou "clinica"
+      // 2. Buscar os dados do utilizador
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         
-        console.log("Dados do user:", userData); // Para debug
+        // Normalizar dados
+        let role = (userData.role || '').toLowerCase();
+        let type = (userData.type || '').toLowerCase();
+        const clinicId = userData.clinicId;
 
-        // 3. Lógica de Redirecionamento
-        if (userData.type === 'centro de adoção') {
-          // Se for Centro de Adoção, vai para a Dashboard nova
+        // --- NOVA LÓGICA INTELIGENTE ---
+        // Se o user (Manel) não tiver 'type' definido, mas tiver um chefe (clinicId),
+        // vamos espreitar o perfil da empresa para saber se é um Centro de Adoção.
+        if (!type && clinicId) {
+            try {
+                const clinicDocRef = doc(db, "users", clinicId);
+                const clinicSnap = await getDoc(clinicDocRef);
+                
+                if (clinicSnap.exists()) {
+                    const clinicData = clinicSnap.data();
+                    if (clinicData.type) {
+                        type = clinicData.type.toLowerCase();
+                        console.log("Tipo herdado da empresa:", type);
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao verificar empresa:", err);
+            }
+        }
+
+        console.log("Login -> Role:", role, "| Type:", type);
+
+        // 3. Redirecionamento Correto
+        if (type === 'centro de adoção' || type === 'centro de adocao') {
+          // Se for Centro (seja Admin ou Funcionário herdado), vai para aqui:
           navigate('/home-centro'); 
-        } else {
-          // Se for Clínica Veterinária (ou Funcionário genérico), vai para a Home normal
+        } 
+        else if (role === 'admin_empresa') {
+          navigate('/home-clinica');
+        }
+        else if (role === 'vet' || role === 'funcionario' || role === 'rececionista') {
+          // Se for clínica normal
+          navigate('/home-clinica');
+        }
+        else if (role === 'admin') {
+          navigate('/admin-dashboard');
+        } 
+        else {
           navigate('/home');
         }
 
       } else {
-        // Caso raro: O login existe no Auth, mas não tem dados na coleção 'users'
         setError("Erro: Perfil de utilizador não encontrado.");
       }
 
     } catch (err) {
       console.error("Erro no login:", err);
-      // Tratamento de erros
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Email ou password incorretos.');
       } else {

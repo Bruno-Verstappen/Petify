@@ -1,4 +1,3 @@
-// App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './features/auth/pages/AuthPage.jsx';
 import Login from './features/auth/pages/Login.jsx';
@@ -16,6 +15,7 @@ import AddPet from './features/auth/pages/AddPet.jsx';
 import AdoptionDetail from './features/auth/pages/AdoptionDetail.jsx';
 import AddVaccine from './features/auth/pages/AddVaccine.jsx';
 import PetList from './features/auth/pages/PetList.jsx';
+import Settings from './features/auth/pages/Settings.jsx';
 function App() {
   return (
     <Routes>
@@ -23,11 +23,11 @@ function App() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/login" element={<Login />} />
       
-      {/* Rotas Empresa */}
+
       <Route path="/RegisterEmpresa1" element={<RegisterEmpresa1 />} />
       <Route path="/RegisterEmpresa2" element={<RegisterEmpresa2 />} />
       
-      {/* Rotas Funcionário */}
+
       <Route path="/RegisterFuncionario1" element={<RegisterFuncionario1 />} />
       <Route path="/RegisterFuncionario2" element={<RegisterFuncionario2 />} />
       
@@ -43,6 +43,7 @@ function App() {
             <Route path="/add-pet" element={<AddPet />} />
       <Route path="/clients/:clientId/pets/:petId/add-vaccine" element={<AddVaccine />} />
       <Route path="/pet-list" element={<PetList />} />
+      <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>
   );
