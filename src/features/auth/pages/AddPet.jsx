@@ -54,7 +54,7 @@ const AddPet = () => {
   const speciesData = {
     "Cão": ["Labrador", "Pastor Alemão", "Bulldog", "Poodle", "Golden Retriever", "Beagle", "Chihuahua", "Rottweiler", "Yorkshire", "Boxer", "SRD (Rafeiro)", "Outro"],
     "Gato": ["Persa", "Siamês", "Maine Coon", "Bengal", "Angorá", "Sphynx", "Ragdoll", "SRD (Rafeiro)", "Outro"],
-    "Pássaro": ["Canário", "Papagaio", "Periquito", "Caturra", "Agaporni", "Rola", "Outro"],
+    "Pássaro": ["Canário", "Papagaio", "Periquito", "Caturra", "Agaponi", "Rola", "Outro"],
     "Outro": ["Coelho", "Hamster", "Tartaruga", "Lagarto"]
   };
 

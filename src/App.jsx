@@ -17,6 +17,7 @@ import AddVaccine from './features/auth/pages/AddVaccine.jsx';
 import PetList from './features/auth/pages/PetList.jsx';
 import Settings from './features/auth/pages/Settings.jsx';
 import Header from './layout/Header.jsx';
+import EditPet from './features/auth/pages/EditPet.jsx';
 function App() {
   return (
     <Routes>
@@ -45,6 +46,7 @@ function App() {
       <Route path="/clients/:clientId/pets/:petId/add-vaccine" element={<AddVaccine />} />
       <Route path="/pet-list" element={<PetList />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/edit-pet/:id" element={<EditPet />} />
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>
   );

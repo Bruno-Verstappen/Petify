@@ -175,12 +175,26 @@ const PetList = () => {
                 </div>
               </div>
 
-              <button
-                className={`status-btn ${pet.status === 'available' ? 'btn-green' : 'btn-red'}`}
-                onClick={(e) => toggleStatus(e, pet)}
-              >
-                {pet.status === 'available' ? 'AVAILABLE' : 'UNAVAILABLE'}
-              </button>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button
+                  className={`status-btn ${pet.status === 'available' ? 'btn-green' : 'btn-red'}`}
+                  onClick={(e) => toggleStatus(e, pet)}
+                >
+                  {pet.status === 'available' ? 'AVAILABLE' : 'UNAVAILABLE'}
+                </button>
+                
+                {/* Botão EDIT rápido na lista */}
+                <button 
+                  className="status-btn"
+                  style={{ backgroundColor: '#555' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/edit-pet/${pet.id}`);
+                  }}
+                >
+                  EDIT
+                </button>
+              </div>
             </div>
           ))}
           {pets.length === 0 && !loading && <p className="no-pets-text">Sem animais no centro.</p>}
@@ -205,9 +219,19 @@ const PetList = () => {
                 <p><strong>Sexo:</strong> {selectedPet.sex}</p>
                 <p><strong>Microchip:</strong> {selectedPet.microchip}</p>
                 <p><strong>Descrição:</strong> {selectedPet.description || "N/A"}</p>
-                <div className="modal-actions">
+                
+                <div className="modal-actions" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <button className="action-btn-toggle" onClick={(e) => toggleStatus(e, selectedPet)}>
                     {selectedPet.status === 'available' ? 'Remover da Adoção' : 'Colocar para Adoção'}
+                  </button>
+
+                  {/* Botão para navegar até a página EditPet */}
+                  <button 
+                    className="action-btn-toggle" 
+                    style={{ backgroundColor: '#FF9800' }} 
+                    onClick={() => navigate(`/edit-pet/${selectedPet.id}`)}
+                  >
+                    Editar Informações
                   </button>
                 </div>
               </div>

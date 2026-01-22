@@ -1,0 +1,162 @@
+/* EditPet.css */
+
+/* Reutilizando a estrutura mas com nuances de edição */
+.edit-pet-container {
+    background: linear-gradient(135deg, #3d2b1f 0%, #1a1510 100%);
+    min-height: 100vh;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-pet-content {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.edit-header-section {
+    width: 100%;
+    margin-bottom: 25px;
+    border-left: 4px solid #FF9800;
+    padding-left: 15px;
+}
+
+.edit-header-section h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #fff;
+}
+
+.edit-header-section p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+/* Estilização do Formulário */
+.pet-form-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.form-grid-edit {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.edit-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #FF9800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.edit-input-group input, 
+.edit-input-group textarea {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid #444;
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.edit-input-group input:focus, 
+.edit-input-group textarea:focus {
+    outline: none;
+    border-color: #FF9800;
+    background-color: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.1);
+}
+
+/* Botões */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.save-btn {
+    padding: 14px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+.save-btn:hover:not(:disabled) {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.cancel-edit-btn {
+    padding: 12px;
+    background: transparent;
+    color: #aaa;
+    border: 1px solid #444;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.cancel-edit-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #777;
+}
+
+/* Loading State */
+.loading-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #1a1510;
+    color: #FF9800;
+    font-size: 1.2rem;
+}
+
+/* Mobile Friendly */
+@media (max-width: 600px) {
+    .form-grid-edit {
+        grid-template-columns: 1fr;
+    }
+    .full-width {
+        grid-column: span 1;
+    }
+}

@@ -242,7 +242,7 @@ const HomeCentro = () => {
             {menuOpen && (
               <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
                 <div className="menu-item" onClick={() => handleNavigate('/home-centro')}>Home</div>
-                <div className="menu-item" onClick={() => handleNavigate('/add-pet')}>Gerir Animais</div>
+                <div className="menu-item" onClick={() => handleNavigate('/pet-list')}>Gerir Animais</div>
                 <div className="menu-item" onClick={() => handleNavigate('/settings')}>Definições</div>
                 <div className="menu-item logout" onClick={handleLogout}>Sair</div>
               </div>
