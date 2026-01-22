@@ -6,6 +6,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import "./Login.css";
 import pataImg from "../../../assets/images/pata_password.png";
 
+// --- IMPORTANTE: Confirma se este caminho está correto para as tuas pastas ---
+import AnimacaoAnimais from "../../../shared/components/AnimacaoAnimais";
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -26,7 +28,6 @@ const Login = () => {
 
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        
         let role = (userData.role || '').toLowerCase();
         let type = (userData.type || '').toLowerCase();
         const clinicId = userData.clinicId;
@@ -35,36 +36,18 @@ const Login = () => {
             try {
                 const clinicDocRef = doc(db, "users", clinicId);
                 const clinicSnap = await getDoc(clinicDocRef);
-                
                 if (clinicSnap.exists()) {
                     const clinicData = clinicSnap.data();
-                    if (clinicData.type) {
-                        type = clinicData.type.toLowerCase();
-                        console.log("Tipo herdado da empresa:", type);
-                    }
+                    if (clinicData.type) type = clinicData.type.toLowerCase();
                 }
-            } catch (err) {
-                console.error("Erro ao verificar empresa:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        console.log("Login -> Role:", role, "| Type:", type);
-
-        if (type === 'centro de adoção' || type === 'centro de adocao') {
-          navigate('/home-centro'); 
-        } 
-        else if (role === 'admin_empresa') {
-          navigate('/home-clinica');
-        }
-        else if (role === 'vet' || role === 'funcionario' || role === 'rececionista') {
-          navigate('/home-clinica');
-        }
-        else if (role === 'admin') {
-          navigate('/admin-dashboard');
-        } 
-        else {
-          navigate('/home');
-        }
+        if (type.includes('centro')) navigate('/home-centro'); 
+        else if (role === 'admin_empresa') navigate('/home-clinica');
+        else if (['vet','funcionario','rececionista'].includes(role)) navigate('/home-clinica');
+        else if (role === 'admin') navigate('/admin-dashboard');
+        else navigate('/home');
 
       } else {
         setError("Erro: Perfil de utilizador não encontrado.");
@@ -72,21 +55,19 @@ const Login = () => {
 
     } catch (err) {
       console.error("Erro no login:", err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Email ou password incorretos.');
-      } else {
-        setError('Ocorreu um erro ao entrar. Tenta novamente.');
-      }
+      setError('Erro ao entrar. Verifica os dados.');
     }
   };
 
   return (
-    <div className="biz-reg-container">
+    // position: relative no container pai é obrigatório
+    <div className="biz-reg-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+      
       <div className="biz-top-link" onClick={() => navigate('/RegisterFuncionario1')}>
         Don't have an account? Register
       </div>
 
-      <div className="biz-main-content">
+      <div className="biz-main-content" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 5 }}>
         <form className="biz-registration-form" onSubmit={handleLogin}>
           <h1 style={{ color: 'white', textAlign: 'center', marginBottom: '20px' }}>Sign In</h1>
           
@@ -130,7 +111,8 @@ const Login = () => {
         </form>
       </div>
 
-      <footer className="biz-footer-responsive">
+      {/* FOOTER - Fica visualmente atrás da animação */}
+      <footer className="biz-footer-responsive" style={{ zIndex: 1 }}>
         <div className="footer-side-column">
            <button type="button" className="biz-btn-nav" onClick={() => navigate('/auth')}>
             Back
@@ -139,6 +121,21 @@ const Login = () => {
         <h2 className="biz-footer-logo">Petify</h2>
         <div className="footer-side-column"></div>
       </footer>
+
+      {/* --- ANIMAÇÃO FLUTUANTE --- */}
+      <div style={{ 
+          position: 'absolute',  // Flutua
+          bottom: 0,             // Cola ao fundo
+          left: 0, 
+          width: '100%', 
+          height: '150px',       // Altura da área de animação
+          overflow: 'hidden',    
+          zIndex: 999,           // VALOR ALTO: Garante que fica à frente de tudo!
+          pointerEvents: 'none'  // Permite clicar nos botões do footer através da animação
+      }}>
+        <AnimacaoAnimais />
+      </div>
+
     </div>
   );
 };

@@ -18,7 +18,8 @@ const Settings = () => {
     phone: '',
     address: '',
     role: '',
-    clinicId: ''
+    clinicId: '',
+    clinicCode: ''
   });
 
   const [teamMembers, setTeamMembers] = useState([]);
@@ -43,14 +44,25 @@ const Settings = () => {
 
       if (userSnap.exists()) {
         const data = userSnap.data();
-        setUserData({ id: uid, ...data });
+        let foundClinicCode = "";
 
+        // Busca o código na coleção 'clinics' onde o campo clinicId coincide
+        if (data.clinicId) {
+          const clinicsRef = collection(db, "clinics");
+          const q = query(clinicsRef, where("clinicId", "==", data.clinicId));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            // Acessa o campo clinicCode: "56789" visto na imagem
+            foundClinicCode = querySnapshot.docs[0].data().clinicCode;
+          }
+        }
+
+        setUserData({ id: uid, ...data, clinicCode: foundClinicCode });
 
         if (data.role === 'admin_empresa' && data.clinicId) {
             fetchTeam(data.clinicId, uid);
         }
-      } else {
-          console.log("Documento do utilizador não encontrado no Firestore.");
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
@@ -60,7 +72,6 @@ const Settings = () => {
   const fetchTeam = async (clinicId, myUid) => {
     try {
         const usersRef = collection(db, "users");
- 
         const q = query(usersRef, where("clinicId", "==", clinicId));
         const snapshot = await getDocs(q);
         
@@ -74,14 +85,12 @@ const Settings = () => {
     }
   };
 
-
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         await updateDoc(userDocRef, {
-            name: userData.name,
             phone: userData.phone || "",
             address: userData.address || ""
         });
@@ -98,7 +107,6 @@ const Settings = () => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-
   const handleDeleteUser = async (userId, userName) => {
     if (!window.confirm(`Eliminar ${userName}?`)) return;
     try {
@@ -107,7 +115,6 @@ const Settings = () => {
         alert("Utilizador removido.");
     } catch (error) { console.error(error); }
   };
-
 
   const handleLogout = () => { auth.signOut(); navigate('/login'); };
   const handleNavigate = (path) => { setMenuOpen(false); if (path) navigate(path); };
@@ -136,12 +143,20 @@ const Settings = () => {
       </header>
 
       <div className="settings-content">
-        
-        {/* PERFIL */}
         <section className="settings-card">
             <h2 className="card-title">My Profile ({userData.role === 'admin_empresa' ? 'Admin' : 'Staff'})</h2>
             
             <form onSubmit={handleSaveProfile} className="profile-form">
+                <div className="form-group">
+                    <label>Clinic Code (To invite staff)</label>
+                    <input 
+                        name="clinicCode" 
+                        value={userData.clinicCode || 'Não disponível'} 
+                        disabled
+                        className="dark-input disabled highlight-code" 
+                    />
+                </div>
+
                 <div className="form-group">
                     <label>Name (Read Only)</label>
                     <input name="name" value={userData.name || ''} 
@@ -172,7 +187,6 @@ const Settings = () => {
             </form>
         </section>
 
-        {/* TEAM MANAGEMENT (Só Admin) */}
         {userData.role === 'admin_empresa' && (
             <section className="settings-card">
                 <div className="card-header-row">

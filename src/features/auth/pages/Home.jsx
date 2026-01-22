@@ -14,14 +14,25 @@ import NotifyIcon from '../../../assets/images/Notifications.png';
 import FilterIcon from '../../../assets/images/Filter.png';
 import MenuIcon from '../../../assets/images/Hamburger_menu.png';
 
+// CONFIRMA O CAMINHO: Se o ficheiro estiver noutra pasta, ajusta aqui
+import LoadingPatinhas from '../../../shared/components/AnimacaoCarregamento';
 const Home = () => {
   const navigate = useNavigate();
+  
+  // --- 1. CONTROLO DA INTRO (SÓ APARECE UMA VEZ POR SESSÃO) ---
+  const [showSplash, setShowSplash] = useState(() => {
+    // Se já tivermos visto a intro nesta sessão, começa como false
+    return !sessionStorage.getItem("jaViIntro");
+  });
+
+  const [loading, setLoading] = useState(true); // Carregamento de dados
+  
+  // --- OUTROS ESTADOS ---
   const [myAppointments, setMyAppointments] = useState([]); 
   const [pendingClinic, setPendingClinic] = useState([]);   
   const [recentChats, setRecentChats] = useState([]);       
   const [userName, setUserName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const [stats, setStats] = useState({
@@ -30,6 +41,20 @@ const Home = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  // --- 2. TIMER DA INTRO ---
+  useEffect(() => {
+    if (showSplash) {
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        // Grava na memória que a intro já foi vista
+        sessionStorage.setItem("jaViIntro", "true");
+      }, 2500); // Duração da animação: 2.5 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSplash]);
+
+  // --- HELPER FUNCTIONS ---
   const getUrgencyClass = (urgency) => {
     if (!urgency) return 'baixa';
     return urgency.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -67,6 +92,7 @@ const Home = () => {
     };
   };
 
+  // --- FETCH DATA (FIREBASE) ---
   useEffect(() => {
     let unsubMyApps = () => {};
     let unsubPending = () => {};
@@ -106,7 +132,7 @@ const Home = () => {
             unsubPending = onSnapshot(qPend, async (snap) => {
               const data = await Promise.all(snap.docs.map(d => getPetAndOwnerData({ id: d.id, ...d.data() })));
               setPendingClinic(data);
-              setLoading(false);
+              setLoading(false); // Dados carregados (mas já não bloqueia o ecrã)
             });
 
             const qChats = query(collection(db, "chats"), where("clinicId", "==", myClinicId), orderBy("updatedAt", "desc"));
@@ -128,8 +154,25 @@ const Home = () => {
     await updateDoc(doc(db, "appointments", appId), { status: 'confirmado', vetId: auth.currentUser.uid });
   };
 
-  if (loading) return <div className="loading-screen"><h1>PETIFY</h1></div>;
+  // --- 3. SPLASH SCREEN (CORRIGIDO) ---
+  // AQUI ESTÁ A CORREÇÃO: Removemos "|| loading". 
+  // Agora a animação SÓ aparece se for a Intro (showSplash).
+  if (showSplash) {
+    return (
+      <div 
+        style={splashStyles.container}
+        // Permite clicar para saltar
+        onClick={() => { setShowSplash(false); sessionStorage.setItem("jaViIntro", "true"); }}
+      >
+        <LoadingPatinhas />
+        <p style={{color: '#888', marginTop: '20px', fontSize: '12px', opacity: 0.7, cursor: 'pointer'}}>
+          (Clica no ecrã para saltar)
+        </p>
+      </div>
+    );
+  }
 
+  // --- 4. DASHBOARD (SITE NORMAL) ---
   return (
     <div className="petify-container">
       <div className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
@@ -203,8 +246,8 @@ const Home = () => {
                   <img src={app.petImg} alt="pet" className="pending-img-compact" />
                   <div className="pending-details" style={{flex: 1}}>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                       <strong>{app.petName} ({app.ownerName})</strong>
-                       <span className={`urgency-dot-small ${getUrgencyClass(app.urgency)}`}></span>
+                        <strong>{app.petName} ({app.ownerName})</strong>
+                        <span className={`urgency-dot-small ${getUrgencyClass(app.urgency)}`}></span>
                     </div>
                     <p style={{fontSize: '12px', color: '#ddd'}}>{app.date}</p>
                     <p style={{fontSize: '13px', margin: '5px 0', color: '#eee'}}>Motivo: {app.reason || "n/a"}</p>
@@ -236,6 +279,23 @@ const Home = () => {
       </main>
     </div>
   );
+};
+
+// --- ESTILOS DO SPLASH SCREEN ---
+const splashStyles = {
+  container: {
+    height: "100vh",
+    width: "100vw",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#222", // Podes alterar a cor de fundo aqui
+    position: "fixed",
+    top: 0,
+    left: 0,
+    zIndex: 9999,
+  }
 };
 
 export default Home;

@@ -14,12 +14,19 @@ import {
 } from "firebase/firestore";
 import Header from "../../../layout/Header";
 
+// 1. IMPORTAR A ANIMAÇÃO (Verifica se o caminho está correto para a tua pasta)
+import LetterPetAnimation from "../../../shared/components/LetterPetAnimation"; 
+
 const Chat = () => {
   const [chats, setChats] = useState([]); 
   const [activeChat, setActiveChat] = useState(null); 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // 2. NOVO ESTADO PARA CONTROLAR A ANIMAÇÃO
+  const [showAnimation, setShowAnimation] = useState(false);
+
   const scrollRef = useRef();
 
   useEffect(() => {
@@ -68,6 +75,9 @@ const Chat = () => {
     e.preventDefault();
     if (input.trim() === "" || !activeChat) return;
 
+    // 3. ATIVAR A ANIMAÇÃO AO ENVIAR
+    setShowAnimation(true);
+
     try {
       const now = Timestamp.now();
       const chatId = activeChat.id;
@@ -113,6 +123,14 @@ const Chat = () => {
 
   return (
     <div className="chat-page-wrapper">
+      
+      {/* 4. RENDERIZAR A ANIMAÇÃO AQUI */}
+      {/* Ela fica por cima de tudo (z-index alto) e desliga-se quando termina */}
+      <LetterPetAnimation 
+        trigger={showAnimation} 
+        onComplete={() => setShowAnimation(false)} 
+      />
+
       <Header />
       <div className="app-container">
         <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>

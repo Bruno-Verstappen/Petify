@@ -7,12 +7,19 @@ import {
 import './HomeCentro.css';
 
 import menuIcon from '../../../assets/images/Hamburger_menu.png';
+import LoadingPatinhas from '../../../shared/components/AnimacaoCarregamento'; 
+// 1. IMPORTAR A ANIMAÇÃO DA AVALANCHE
+import ProgressoAdocoes from '../../../shared/components/ProgressoAdocoes'; 
 
 const HomeCentro = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  
+  // Estados de Interface
+  const [loading, setLoading] = useState(true); 
+  const [showSplash, setShowSplash] = useState(true); 
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Estados de Dados
   const [stats, setStats] = useState({ totalPets: 0, adoptions: 0, pending: 0, last30Days: 0, avgTime: 0 });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [interviewRequests, setInterviewRequests] = useState([]);
@@ -20,9 +27,24 @@ const HomeCentro = () => {
   const [petsInCenter, setPetsInCenter] = useState([]);
   const [interviewDates, setInterviewDates] = useState({});
 
-  const fetchData = async () => {
+  // Timer do Splash Screen (3.5 segundos)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3500); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // --- FUNÇÃO FETCH DATA CORRIGIDA ---
+  // isBackgroundUpdate = false (padrão): Mostra loading (usado ao entrar na página)
+  // isBackgroundUpdate = true: NÃO mostra loading (usado após ações como aceitar adoção)
+  const fetchData = async (isBackgroundUpdate = false) => {
     try {
-      setLoading(true);
+      if (!isBackgroundUpdate) {
+        setLoading(true);
+      }
+      
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
@@ -42,6 +64,7 @@ const HomeCentro = () => {
         }
       }
 
+      // --- BUSCAR PETS ---
       const petsRef = collection(db, "pets");
       const petsSnapshot = await getDocs(petsRef);
 
@@ -60,6 +83,7 @@ const HomeCentro = () => {
         }
       });
 
+      // --- BUSCAR PEDIDOS ---
       const reqRef = collection(db, "adoption_requests");
       const reqSnapshot = await getDocs(reqRef);
 
@@ -116,7 +140,7 @@ const HomeCentro = () => {
         totalPets: total,
         adoptions: acceptedCount,
         pending: pending.length + interviews.length,
-        last30Days: adoptions30Days,
+        last30Days: adoptions30Days, // É este valor que dispara a avalanche!
         avgTime: averageTime
       });
 
@@ -128,12 +152,15 @@ const HomeCentro = () => {
     } catch (error) {
       console.error("Erro:", error);
     } finally {
+      // Garante que o loading desaparece (importante na primeira carga)
       setLoading(false);
     }
   };
 
+  // Primeira carga (mostra loading)
   useEffect(() => { fetchData(); }, []);
 
+  // --- NOTIFICAÇÕES ---
   const sendNotification = async (userId, title, body) => {
     if (!userId) return;
     try {
@@ -149,6 +176,7 @@ const HomeCentro = () => {
     }
   };
 
+  // --- AGENDAR ENTREVISTA ---
   const handleScheduleInterview = async (reqId) => {
     const rawDate = interviewDates[reqId];
     if (!rawDate) { alert("Selecione uma data e hora."); return; }
@@ -173,10 +201,12 @@ const HomeCentro = () => {
       }
 
       alert("Entrevista marcada e utilizador notificado!");
-      fetchData();
+      // ATUALIZAÇÃO SILENCIOSA (sem loading)
+      fetchData(true);
     } catch (error) { console.error(error); }
   };
 
+  // --- DECISÃO FINAL (ACEITAR/RECUSAR) ---
   const handleFinalDecision = async (req, decision) => {
     if (!window.confirm(decision === 'accepted' ? "Aceitar esta adoção?" : "Recusar este pedido?")) return;
 
@@ -207,7 +237,12 @@ const HomeCentro = () => {
       }
 
       alert("Decisão registada com sucesso!");
-      fetchData();
+      
+      // *** AQUI ESTÁ O SEGREDO ***
+      // Passamos 'true' para não ativar o loading screen.
+      // Assim o componente da animação não é reiniciado e vê a mudança de número!
+      fetchData(true); 
+
     } catch (error) { console.error(error); }
   };
 
@@ -229,6 +264,16 @@ const HomeCentro = () => {
     setMenuOpen(!menuOpen);
   };
 
+  // --- RENDERIZAÇÃO CONDICIONAL (SPLASH) ---
+  if (showSplash || loading) {
+    return (
+      <div style={splashStyles.container}>
+        <LoadingPatinhas />
+      </div>
+    );
+  }
+
+  // --- RENDERIZAÇÃO DO DASHBOARD ---
   return (
     <div className="dashboard-container" onClick={() => setMenuOpen(false)}>
       <header className="dash-header">
@@ -271,11 +316,16 @@ const HomeCentro = () => {
         </aside>
 
         <main className="main-panel">
+          
+          {/* --- ANIMAÇÃO DE PROGRESSO E AVALANCHE --- */}
+          {/* Recebe o número de adoções dos últimos 30 dias. Meta definida para 20. */}
+          <ProgressoAdocoes currentAdoptions={stats.last30Days} goal={20} />
+
           <div className="kpi-grid">
             <div className="kpi-card"><h2>{stats.totalPets}</h2><p>Total Pets</p></div>
-            <div className="kpi-card"><h2>{stats.adoptions}</h2><p>Adoptions</p></div>
-            <div className="kpi-card"><h2>{stats.last30Days}</h2><p>Últimos 30 Dias</p></div>
-            <div className="kpi-card"><h2>{stats.avgTime}d</h2><p>Tempo Médio</p></div>
+            <div className="kpi-card"><h2>{stats.adoptions}</h2><p>Total Adoptions</p></div>
+            <div className="kpi-card"><h2>{stats.last30Days}</h2><p>Adoções nos últimos 30 Dias</p></div>
+            <div className="kpi-card"><h2>{stats.avgTime}d</h2><p>Tempo médio do processo</p></div>
           </div>
 
           <section className="section-block">
@@ -378,6 +428,23 @@ const HomeCentro = () => {
       </div>
     </div>
   );
+};
+
+// Estilos para o Loading Screen (Fundo Escuro)
+const splashStyles = {
+  container: {
+    height: "100vh",
+    width: "100vw",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#222", 
+    position: "fixed",
+    top: 0,
+    left: 0,
+    zIndex: 9999,
+  }
 };
 
 export default HomeCentro;
