@@ -234,7 +234,7 @@ const Home = () => {
               <div className="stat-box-hero"><h1>{stats.newClients}</h1><span>my clients</span></div>
               <div className="stat-box-hero"><h1>{stats.petsTratados}</h1><span>pets treated</span></div>
               <div className="stat-box-hero"><h1>{stats.consultas}</h1><span>consultations</span></div>
-              <div className="stat-box-hero"><h1>{stats.faturamento}€</h1><span>my revenue</span></div>
+              <div className="stat-box-hero"><h1>{stats.faturamento}€</h1><span>my balance</span></div>
             </div>
           </div>
 
